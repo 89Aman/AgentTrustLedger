@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import traceback
 from flask import Flask, render_template, jsonify, request
 
 # Add project root to sys.path
@@ -61,72 +62,83 @@ def index():
 
 @app.route("/api/state")
 def get_state():
-    agents = db.list_agents()
-    transactions = db.list_transactions()
-    reputation = list(db._mock_reputation.values()) if db.use_mock else []
-    security_events = db.list_security_events()
-    autonomy = db.get_autonomy_settings().model_dump()
-    
-    audit_logs = []
-    if db.use_mock:
-        for txn_id, txn in db._mock_transactions.items():
-            for log in txn.get("audit_log", []):
-                log_copy = dict(log)
-                log_copy["transaction_id"] = txn_id
-                audit_logs.append(log_copy)
-        audit_logs.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+    try:
+        agents = db.list_agents()
+        transactions = db.list_transactions()
+        reputation = list(db._mock_reputation.values()) if db.use_mock else []
+        security_events = db.list_security_events()
+        autonomy = db.get_autonomy_settings().model_dump()
+        
+        audit_logs = []
+        if db.use_mock:
+            for txn_id, txn in db._mock_transactions.items():
+                for log in txn.get("audit_log", []):
+                    log_copy = dict(log)
+                    log_copy["transaction_id"] = txn_id
+                    audit_logs.append(log_copy)
+            audit_logs.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
 
-    # Compute KPIs
-    funds_in_escrow = sum(t.get("amount", 0) for t in transactions if t.get("status") in ["escrowed", "awaiting_human_approval"])
-    active_txns = sum(1 for t in transactions if t.get("status") in ["escrowed", "awaiting_human_approval", "paused"])
-    needs_review = sum(1 for t in transactions if t.get("status") in ["awaiting_human_approval", "disputed"])
-    security_blocks = len(security_events)
-    trusted_count = sum(1 for a in agents if a.get("status") == "active" and "rogue" not in a.get("agent_id", ""))
-    flagged_count = sum(1 for a in agents if a.get("status") in ["suspended", "paused"] or "rogue" in a.get("agent_id", ""))
+        # Compute KPIs
+        funds_in_escrow = sum(t.get("amount", 0) for t in transactions if t.get("status") in ["escrowed", "awaiting_human_approval"])
+        active_txns = sum(1 for t in transactions if t.get("status") in ["escrowed", "awaiting_human_approval", "paused"])
+        needs_review = sum(1 for t in transactions if t.get("status") in ["awaiting_human_approval", "disputed"])
+        security_blocks = len(security_events)
+        trusted_count = sum(1 for a in agents if a.get("status") == "active" and "rogue" not in a.get("agent_id", ""))
+        flagged_count = sum(1 for a in agents if a.get("status") in ["suspended", "paused"] or "rogue" in a.get("agent_id", ""))
 
-    return jsonify({
-        "gcp_project": GCP_PROJECT,
-        "model": GEMINI_MODEL,
-        "agents": agents,
-        "transactions": transactions,
-        "reputation": reputation,
-        "security_events": security_events,
-        "autonomy": autonomy,
-        "audit_logs": audit_logs,
-        "kpis": {
-            "funds_in_escrow": funds_in_escrow,
-            "active_transactions": active_txns,
-            "needs_review": needs_review,
-            "security_blocks": security_blocks,
-            "network_health": f"{trusted_count} trusted / {flagged_count} flagged"
-        }
-    })
+        return jsonify({
+            "gcp_project": GCP_PROJECT,
+            "model": GEMINI_MODEL,
+            "agents": agents,
+            "transactions": transactions,
+            "reputation": reputation,
+            "security_events": security_events,
+            "autonomy": autonomy,
+            "audit_logs": audit_logs,
+            "kpis": {
+                "funds_in_escrow": funds_in_escrow,
+                "active_transactions": active_txns,
+                "needs_review": needs_review,
+                "security_blocks": security_blocks,
+                "network_health": f"{trusted_count} trusted / {flagged_count} flagged"
+            }
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 # --- Autonomy Settings Endpoints ---
 @app.route("/api/settings/autonomy", methods=["GET", "POST"])
 def settings_autonomy():
-    if request.method == "POST":
-        data = request.get_json(silent=True) or {}
-        current = db.get_autonomy_settings()
-        if "mode" in data:
-            current.mode = data["mode"]
-        if "approval_amount_threshold" in data:
-            current.approval_amount_threshold = float(data["approval_amount_threshold"])
-        if "minimum_release_confidence" in data:
-            current.minimum_release_confidence = float(data["minimum_release_confidence"])
-        if "require_approval_for_security_events" in data:
-            current.require_approval_for_security_events = bool(data["require_approval_for_security_events"])
-        db.save_autonomy_settings(current)
-        return jsonify({"success": True, "autonomy": current.model_dump()})
-    return jsonify(db.get_autonomy_settings().model_dump())
+    try:
+        if request.method == "POST":
+            data = request.get_json(silent=True) or {}
+            current = db.get_autonomy_settings()
+            if "mode" in data:
+                current.mode = data["mode"]
+            if "approval_amount_threshold" in data:
+                current.approval_amount_threshold = float(data["approval_amount_threshold"])
+            if "minimum_release_confidence" in data:
+                current.minimum_release_confidence = float(data["minimum_release_confidence"])
+            if "require_approval_for_security_events" in data:
+                current.require_approval_for_security_events = bool(data["require_approval_for_security_events"])
+            db.save_autonomy_settings(current)
+            return jsonify({"success": True, "autonomy": current.model_dump()})
+        return jsonify(db.get_autonomy_settings().model_dump())
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 # --- Transaction Operator Actions ---
 @app.route("/api/transactions/<txn_id>/details", methods=["GET"])
 def transaction_details(txn_id):
-    txn = db.get_transaction(txn_id)
-    if not txn:
-        return jsonify({"error": "Transaction not found"}), 404
-    return jsonify(txn)
+    try:
+        txn = db.get_transaction(txn_id)
+        if not txn:
+            return jsonify({"error": "Transaction not found"}), 404
+        return jsonify(txn)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/transactions/<txn_id>/approve", methods=["POST"])
 def transaction_approve(txn_id):
@@ -134,6 +146,7 @@ def transaction_approve(txn_id):
         decision = escrow.operator_approve_release(txn_id)
         return jsonify({"success": True, "action": decision.action, "reason": decision.reason})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 @app.route("/api/transactions/<txn_id>/refund", methods=["POST"])
@@ -144,6 +157,7 @@ def transaction_refund(txn_id):
         decision = escrow.operator_refund_buyer(txn_id, reason=reason)
         return jsonify({"success": True, "action": decision.action, "reason": decision.reason})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 @app.route("/api/transactions/<txn_id>/pause", methods=["POST"])
@@ -152,6 +166,7 @@ def transaction_pause(txn_id):
         decision = escrow.operator_pause_transaction(txn_id)
         return jsonify({"success": True, "action": decision.action, "reason": decision.reason})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 @app.route("/api/transactions/<txn_id>/resume", methods=["POST"])
@@ -160,104 +175,126 @@ def transaction_resume(txn_id):
         decision = escrow.operator_resume_transaction(txn_id)
         return jsonify({"success": True, "action": decision.action, "reason": decision.reason})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 # --- Agent Governance Endpoints ---
 @app.route("/api/agents/<agent_id>/status", methods=["POST"])
 def agent_set_status(agent_id):
-    data = request.get_json(silent=True) or {}
-    status = data.get("status", "active")
-    if status not in ["active", "paused", "suspended"]:
-        return jsonify({"error": "Invalid status"}), 400
     try:
+        data = request.get_json(silent=True) or {}
+        status = data.get("status", "active")
+        if status not in ["active", "paused", "suspended"]:
+            return jsonify({"error": "Invalid status"}), 400
         agent = registry.set_agent_status(agent_id, status)
         return jsonify({"success": True, "agent": agent.model_dump()})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 @app.route("/api/agents/<agent_id>/policy", methods=["POST"])
 def agent_set_policy(agent_id):
-    data = request.get_json(silent=True) or {}
     try:
+        data = request.get_json(silent=True) or {}
         policy = AgentPolicy(**data)
         agent = registry.update_agent_policy(agent_id, policy)
         return jsonify({"success": True, "agent": agent.model_dump()})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 # --- Security Center Endpoints ---
 @app.route("/api/security/events", methods=["GET"])
 def security_events_list():
-    return jsonify(db.list_security_events())
+    try:
+        return jsonify(db.list_security_events())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/security/events/<event_id>/resolve", methods=["POST"])
 def security_event_resolve(event_id):
-    data = request.get_json(silent=True) or {}
-    status = data.get("status", "resolved")
-    db.update_security_event_status(event_id, status)
-    return jsonify({"success": True, "event_id": event_id, "status": status})
+    try:
+        data = request.get_json(silent=True) or {}
+        status = data.get("status", "resolved")
+        db.update_security_event_status(event_id, status)
+        return jsonify({"success": True, "event_id": event_id, "status": status})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 # --- Demo Action Endpoints ---
 @app.route("/api/action/initiate", methods=["POST"])
 def action_initiate():
-    data = request.get_json(silent=True) or {}
-    buyer_id = data.get("buyer_id", "buyer-enterprise-01")
-    vendor_id = data.get("vendor_id", "vendor-prime-logistics")
-    amount = float(data.get("amount", 5000.0))
-    txn_id = f"txn-{int(time.time())}"
+    try:
+        data = request.get_json(silent=True) or {}
+        buyer_id = data.get("buyer_id", "buyer-enterprise-01")
+        vendor_id = data.get("vendor_id", "vendor-prime-logistics")
+        amount = float(data.get("amount", 5000.0))
+        txn_id = f"txn-{int(time.time())}"
 
-    buyer = BuyerAgent(agent_id=buyer_id, pubsub_mgr=pubsub)
-    req = buyer.initiate_transaction(
-        transaction_id=txn_id,
-        vendor_id=vendor_id,
-        amount=amount,
-        delivery_conditions=["hardware_received", "quality_passed"]
-    )
-    decision = escrow.initiate_escrow(req)
-    return jsonify({"transaction_id": txn_id, "action": decision.action, "reason": decision.reason})
+        buyer = BuyerAgent(agent_id=buyer_id, pubsub_mgr=pubsub)
+        req = buyer.initiate_transaction(
+            transaction_id=txn_id,
+            vendor_id=vendor_id,
+            amount=amount,
+            delivery_conditions=["hardware_received", "quality_passed"]
+        )
+        decision = escrow.initiate_escrow(req)
+        return jsonify({"transaction_id": txn_id, "action": decision.action, "reason": decision.reason})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e), "reason": f"Initiation failed: {e}"}), 500
 
 @app.route("/api/action/claim_spoofed", methods=["POST"])
 def action_claim_spoofed():
-    data = request.get_json(silent=True) or {}
-    txn_id = data.get("transaction_id")
-    if not txn_id and db._mock_transactions:
-        # Pick latest non-released transaction or latest transaction
-        txns = list(db._mock_transactions.keys())
-        txn_id = txns[-1]
-    
-    if not txn_id:
-        return jsonify({"error": "No transaction found"}), 400
+    try:
+        data = request.get_json(silent=True) or {}
+        txn_id = data.get("transaction_id")
+        if not txn_id and db._mock_transactions:
+            # Pick latest non-released transaction or latest transaction
+            txns = list(db._mock_transactions.keys())
+            txn_id = txns[-1]
+        
+        if not txn_id:
+            return jsonify({"error": "No transaction found"}), 400
 
-    rogue = VendorAgent(agent_id="vendor-rogue-actor", pubsub_mgr=pubsub)
-    claim = rogue.submit_delivery_claim(
-        transaction_id=txn_id,
-        evidence={"hardware_received": True, "quality_passed": True},
-        override_signature="bad-spoofed-signature"
-    )
-    decision = escrow.process_claim(claim)
-    return jsonify({"action": decision.action, "reason": decision.reason, "security_flag": decision.security_flag_raised})
+        rogue = VendorAgent(agent_id="vendor-rogue-actor", pubsub_mgr=pubsub)
+        claim = rogue.submit_delivery_claim(
+            transaction_id=txn_id,
+            evidence={"hardware_received": True, "quality_passed": True},
+            override_signature="bad-spoofed-signature"
+        )
+        decision = escrow.process_claim(claim)
+        return jsonify({"action": decision.action, "reason": decision.reason, "security_flag": decision.security_flag_raised})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e), "reason": f"Spoofed claim failed: {e}"}), 500
 
 @app.route("/api/action/claim_legit", methods=["POST"])
 def action_claim_legit():
-    data = request.get_json(silent=True) or {}
-    txn_id = data.get("transaction_id")
-    if not txn_id and db._mock_transactions:
-        txns = list(db._mock_transactions.keys())
-        txn_id = txns[-1]
+    try:
+        data = request.get_json(silent=True) or {}
+        txn_id = data.get("transaction_id")
+        if not txn_id and db._mock_transactions:
+            txns = list(db._mock_transactions.keys())
+            txn_id = txns[-1]
 
-    if not txn_id:
-        return jsonify({"error": "No transaction found"}), 400
+        if not txn_id:
+            return jsonify({"error": "No transaction found"}), 400
 
-    vendor_id = db._mock_transactions[txn_id].get("vendor_id", "vendor-prime-logistics")
-    vendor = VendorAgent(agent_id=vendor_id, pubsub_mgr=pubsub)
+        vendor_id = db._mock_transactions[txn_id].get("vendor_id", "vendor-prime-logistics")
+        vendor = VendorAgent(agent_id=vendor_id, pubsub_mgr=pubsub)
 
-    evidence = {"hardware_received": True, "quality_passed": True}
-    claim = vendor.submit_delivery_claim(
-        transaction_id=txn_id,
-        evidence=evidence
-    )
-    decision = escrow.process_claim(claim)
-    return jsonify({"action": decision.action, "reason": decision.reason})
+        evidence = {"hardware_received": True, "quality_passed": True}
+        claim = vendor.submit_delivery_claim(
+            transaction_id=txn_id,
+            evidence=evidence
+        )
+        decision = escrow.process_claim(claim)
+        return jsonify({"action": decision.action, "reason": decision.reason})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e), "reason": f"Legit claim failed: {e}"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))

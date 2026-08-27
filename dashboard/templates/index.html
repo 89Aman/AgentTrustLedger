@@ -685,36 +685,52 @@
         }
 
         function setOnline(data) {
-            document.getElementById('hdr-led').className = 'led led-green led-pulse';
-            document.getElementById('hdr-status-text').style.color = 'var(--green-hi)';
-            document.getElementById('hdr-status-text').innerText = 'Escrow Live';
-            document.getElementById('hdr-status-badge').style.borderColor = 'var(--green)';
+            const hdrLed = document.getElementById('hdr-led');
+            if (hdrLed) hdrLed.className = 'led led-green led-pulse';
+            const hdrStatusText = document.getElementById('hdr-status-text');
+            if (hdrStatusText) {
+                hdrStatusText.style.color = 'var(--green-hi)';
+                hdrStatusText.innerText = 'Escrow Live';
+            }
+            const hdrStatusBadge = document.getElementById('hdr-status-badge');
+            if (hdrStatusBadge) hdrStatusBadge.style.borderColor = 'var(--green)';
             
-            document.getElementById('sidebar-led').className = 'led led-green';
-            document.getElementById('sidebar-guard').style.color = 'var(--green-hi)';
-            document.getElementById('sidebar-guard').innerHTML = '<span class="led led-green"></span> VIGILANT GUARD ACTIVE';
+            const sidebarGuard = document.getElementById('sidebar-guard');
+            if (sidebarGuard) {
+                sidebarGuard.style.color = 'var(--green-hi)';
+                sidebarGuard.innerHTML = '<span id="sidebar-led" class="led led-green"></span> VIGILANT GUARD ACTIVE';
+            }
             
-            if (data.gcp_project) document.getElementById('hdr-project').innerText = data.gcp_project;
-            if (data.model) document.getElementById('hdr-model').innerText = data.model;
+            const hdrProject = document.getElementById('hdr-project');
+            if (hdrProject && data.gcp_project) hdrProject.innerText = data.gcp_project;
+            const hdrModel = document.getElementById('hdr-model');
+            if (hdrModel && data.model) hdrModel.innerText = data.model;
 
             // Autonomy buttons
             if (data.autonomy) {
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                if (data.autonomy.mode === 'manual') document.getElementById('mode-manual').classList.add('active');
-                if (data.autonomy.mode === 'guarded_auto') document.getElementById('mode-guarded').classList.add('active');
-                if (data.autonomy.mode === 'full_auto') document.getElementById('mode-full').classList.add('active');
+                if (data.autonomy.mode === 'manual') document.getElementById('mode-manual')?.classList.add('active');
+                if (data.autonomy.mode === 'guarded_auto') document.getElementById('mode-guarded')?.classList.add('active');
+                if (data.autonomy.mode === 'full_auto') document.getElementById('mode-full')?.classList.add('active');
             }
         }
 
         function setOffline() {
-            document.getElementById('hdr-led').className = 'led led-red';
-            document.getElementById('hdr-status-text').style.color = 'var(--red-hi)';
-            document.getElementById('hdr-status-text').innerText = 'Offline';
-            document.getElementById('hdr-status-badge').style.borderColor = 'var(--red)';
+            const hdrLed = document.getElementById('hdr-led');
+            if (hdrLed) hdrLed.className = 'led led-red';
+            const hdrStatusText = document.getElementById('hdr-status-text');
+            if (hdrStatusText) {
+                hdrStatusText.style.color = 'var(--red-hi)';
+                hdrStatusText.innerText = 'Offline';
+            }
+            const hdrStatusBadge = document.getElementById('hdr-status-badge');
+            if (hdrStatusBadge) hdrStatusBadge.style.borderColor = 'var(--red)';
             
-            document.getElementById('sidebar-led').className = 'led led-amber';
-            document.getElementById('sidebar-guard').style.color = 'var(--text-dimmer)';
-            document.getElementById('sidebar-guard').innerHTML = '<span class="led led-amber"></span> GUARD STANDBY';
+            const sidebarGuard = document.getElementById('sidebar-guard');
+            if (sidebarGuard) {
+                sidebarGuard.style.color = 'var(--text-dimmer)';
+                sidebarGuard.innerHTML = '<span id="sidebar-led" class="led led-amber"></span> GUARD STANDBY';
+            }
         }
 
         async function fetchState() {
