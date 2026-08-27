@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Agent Trust Ledger — Credit Bureau for AI Agents</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0e121a;
+            --panel: #161b26;
+            --raised: #1c2230;
+            --inset: #090c12;
+            --border-hi: #2d3748;
+            --border-lo: #07090e;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-dimmer: #64748b;
+            --purple: #6d28d9;
+            --purple-hi: #8b5cf6;
+            --purple-lo: #4c1d95;
+            --green: #059669;
+            --green-hi: #10b981;
+            --green-lo: #047857;
+            --red: #dc2626;
+            --red-hi: #ef4444;
+            --red-lo: #991b1b;
+            --amber: #d97706;
+            --amber-hi: #f59e0b;
+            --blue: #2563eb;
+            --blue-hi: #60a5fa;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 56px;
+            padding-left: 240px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* ===== SKEUOMORPHIC PRIMITIVES ===== */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border-hi);
+            border-bottom: 2px solid var(--border-lo);
+            border-right: 2px solid var(--border-lo);
+            box-shadow: 5px 5px 12px #050710, -3px -3px 8px #1a2030;
+            border-radius: 10px;
+        }
+
+        .card-raised {
+            background: var(--raised);
+            border: 1px solid #2a3344;
+            border-top: 1px solid #354158;
+            box-shadow: 3px 3px 8px #050710, -2px -2px 6px #222c3e;
+            border-radius: 8px;
+        }
+
+        .well {
+            background: var(--inset);
+            border: 1px solid #111620;
+            box-shadow: inset 3px 3px 8px #030408, inset -2px -2px 5px #141a24;
+            border-radius: 6px;
+        }
+
+        /* ===== MECHANICAL BUTTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.06s, box-shadow 0.06s, border-bottom-width 0.06s;
+            user-select: none;
+            color: #fff;
+        }
+        .btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 1px !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6) !important;
+        }
+
+        .btn-purple {
+            background: var(--purple);
+            border: 1px solid var(--purple-hi);
+            border-bottom: 3px solid var(--purple-lo);
+            box-shadow: 0 3px 7px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .btn-purple:hover { background: #7c3aed; }
+
+        .btn-red {
+            background: var(--red);
+            border: 1px solid var(--red-hi);
+            border-bottom: 3px solid var(--red-lo);
+            box-shadow: 0 3px 7px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .btn-red:hover { background: #e53e3e; }
+
+        .btn-green {
+            background: var(--green);
+            border: 1px solid var(--green-hi);
+            border-bottom: 3px solid var(--green-lo);
+            box-shadow: 0 3px 7px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .btn-green:hover { background: #10b981; }
+
+        /* ===== LED INDICATORS ===== */
+        .led { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .led-green { background: var(--green-hi); box-shadow: 0 0 6px var(--green-hi), inset 0 0 2px #fff; }
+        .led-red { background: var(--red-hi); box-shadow: 0 0 6px var(--red-hi), inset 0 0 2px #fff; }
+        .led-amber { background: var(--amber-hi); box-shadow: 0 0 6px var(--amber-hi), inset 0 0 2px #fff; }
+        @keyframes pulse-led { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .led-pulse { animation: pulse-led 2s infinite; }
+
+        /* ===== BADGE ===== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            background: #1a212e;
+            border: 1px solid #2d384c;
+            box-shadow: inset 1px 1px 2px #080a0f, 1px 1px 3px #1f2736;
+            border-radius: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        /* ===== PROGRESS BAR (INSET) ===== */
+        .progress-track {
+            height: 8px;
+            border-radius: 4px;
+            padding: 2px;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+
+        /* ===== TAG ===== */
+        .tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .tag-buyer { background: #1e1b4b; border: 1px solid #4338ca; color: #a5b4fc; }
+        .tag-vendor { background: #064e3b; border: 1px solid var(--green); color: #6ee7b7; }
+        .tag-flagged { background: #450a0a; border: 1px solid var(--red); color: #fca5a5; }
+        .tag-escrowed { background: #451a03; border: 1px solid var(--amber); color: #fcd34d; }
+        .tag-released { background: #064e3b; border: 1px solid var(--green); color: #6ee7b7; }
+        .tag-disputed { background: #450a0a; border: 1px solid var(--red); color: #fca5a5; }
+        .tag-unrated { background: #1f2937; border: 1px solid #374151; color: #9ca3af; }
+
+        /* ===== SCROLLBAR ===== */
+        .scr::-webkit-scrollbar { width: 5px; }
+        .scr::-webkit-scrollbar-track { background: var(--inset); }
+        .scr::-webkit-scrollbar-thumb { background: #263042; border-radius: 3px; }
+
+        /* ===== HEADER ===== */
+        .top-bar {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 50;
+            height: 56px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px;
+            background: #121620;
+            border-bottom: 2px solid #080a0f;
+            box-shadow: 0 3px 10px #05070a;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0; width: 240px; height: 100vh;
+            z-index: 40; display: flex; flex-direction: column;
+            background: #10141e;
+            border-right: 2px solid var(--border-lo);
+            padding-top: 56px;
+            box-shadow: 3px 0 10px #050710;
+        }
+
+        /* ===== LAYOUT ===== */
+        .main { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 4fr 5fr 3fr; gap: 20px; }
+
+        /* ===== ALERT BANNER ===== */
+        .alert-banner {
+            background: #3b0d0c;
+            border: 2px solid var(--red);
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 0 20px rgba(220,38,38,0.3);
+        }
+        .alert-banner.visible { display: flex; }
+
+        @media (max-width: 1280px) { .grid-3 { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) {
+            body { padding-left: 0; }
+            .sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== TOP HEADER BAR ====== -->
+    <header class="top-bar">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:8px;background:#1a202c;border:1px solid #2d3748;display:flex;align-items:center;justify-content:center;box-shadow:inset 1px 1px 3px #0a0e15;">
+                <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:20px;">shield</span>
+            </div>
+            <span style="font-weight:800;font-size:16px;color:#fff;letter-spacing:-0.01em;">Agent Trust Ledger</span>
+            <span class="badge" style="font-size:10px;color:var(--purple-hi);">FORTIFIED FLEET</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div class="badge">
+                <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-dim);">cloud</span>
+                <span style="color:var(--text-dim);">GCP: <strong id="hdr-project" style="color:#fff;">{{ gcp_project if gcp_project else 'massive-house-506806-t6' }}</strong></span>
+            </div>
+            <div class="badge">
+                <span class="material-symbols-outlined" style="font-size:14px;color:var(--blue-hi);">memory</span>
+                <span style="color:var(--blue-hi);">Model: <strong id="hdr-model" style="color:#fff;">{{ model if model else 'gemini-3.5-flash' }}</strong></span>
+            </div>
+            <div id="hdr-status-badge" class="badge" style="border-color:var(--red);">
+                <span id="hdr-led" class="led led-red"></span>
+                <span id="hdr-status-text" style="color:var(--red-hi);font-weight:700;">Offline</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ====== SIDEBAR ====== -->
+    <nav class="sidebar">
+        <div style="padding:16px;border-bottom:1px solid #1c2331;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dimmer);">Command Deck</div>
+            <div id="sidebar-guard" style="margin-top:8px;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dimmer);">
+                <span id="sidebar-led" class="led led-amber"></span>
+                GUARD STANDBY
+            </div>
+        </div>
+        <div style="padding:10px;display:flex;flex-direction:column;gap:4px;">
+            <div class="card-raised" style="padding:10px;display:flex;align-items:center;gap:8px;color:#fff;font-size:11px;font-weight:700;">
+                <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:18px;">dashboard</span>
+                Overview & Ledger
+            </div>
+        </div>
+        <div style="margin-top:auto;padding:12px 16px;border-top:1px solid #1c2331;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dimmer);">
+            <div>Engine: Vertex AI ADK</div>
+            <div>Runtime: Google Cloud Run</div>
+        </div>
+    </nav>
+
+    <!-- ====== MAIN CONTENT ====== -->
+    <main class="main">
+
+        <!-- Alert Banner -->
+        <div id="alert-banner" class="alert-banner">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;">
+                    <span class="material-symbols-outlined" style="color:#fff;font-size:22px;">warning</span>
+                </div>
+                <div>
+                    <strong id="alert-title" style="font-size:12px;color:#fca5a5;letter-spacing:0.04em;">SECURITY GUARD INTERVENTION</strong>
+                    <p id="alert-message" style="font-size:11px;color:#fecaca;margin-top:2px;">Spoofed payload detected and blocked.</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('alert-banner').classList.remove('visible')" style="width:32px;height:32px;border-radius:6px;background:#7f1d1d;border:1px solid #991b1b;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+            </button>
+        </div>
+
+        <!-- Hero Section with Security & Trust Guard Disclosure -->
+        <section class="card" style="padding:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+            <div style="max-width:620px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                    <span class="tag tag-buyer">Fortified Enterprise Fleet</span>
+                    <span class="tag" style="background:#1e1b4b;border:1px solid #4338ca;color:#c7d2fe;" title="Custom pre-model security validation">
+                        Security & Trust Guard — Custom Pre-Model Validation (Model Armor Principles)
+                    </span>
+                </div>
+                <h1 style="font-size:22px;font-weight:800;color:#fff;line-height:1.3;margin-top:4px;">Escrow & Reputation Layer for Autonomous AI Commerce</h1>
+                <p style="font-size:12px;color:var(--text-dim);margin-top:8px;line-height:1.6;">
+                    Holding simulated demo funds securely, verifying identity signatures, screening claims with inline Security & Trust Guard callbacks, and maintaining public agent credit scores.
+                </p>
+                <div style="font-size:11px;color:var(--text-dimmer);margin-top:6px;font-style:italic;">
+                    * All monetary amounts displayed are simulated demo credits for test execution.
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-purple" onclick="triggerAction('/api/action/initiate')">
+                    <span class="material-symbols-outlined" style="font-size:16px;">add_circle</span>
+                    + Initiate Escrow Txn (5,000 demo credits)
+                </button>
+                <button class="btn btn-red" onclick="triggerAction('/api/action/claim_spoofed')">
+                    <span class="material-symbols-outlined" style="font-size:16px;">gpp_bad</span>
+                    Inject Spoofed Claim
+                </button>
+                <button class="btn btn-green" onclick="triggerAction('/api/action/claim_legit')">
+                    <span class="material-symbols-outlined" style="font-size:16px;">verified</span>
+                    Submit Legit Claim
+                </button>
+            </div>
+        </section>
+
+        <!-- 3-Column Grid -->
+        <div class="grid-3">
+
+            <!-- Agent Registry -->
+            <div class="card" style="display:flex;flex-direction:column;height:420px;">
+                <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;">
+                    <h2 style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
+                        <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:18px;">memory</span>
+                        Agent Registry
+                    </h2>
+                    <span class="badge" style="font-size:10px;color:var(--green-hi);">
+                        <span class="led led-green" style="width:6px;height:6px;"></span> ACTIVE
+                    </span>
+                </div>
+                <div id="registry-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;">
+                    <div class="card-raised" style="padding:12px;display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <strong style="font-size:12px;color:#fff;display:block;">buyer-enterprise-01</strong>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">global_procurement, escrow</span>
+                        </div>
+                        <span class="tag tag-buyer">BUYER</span>
+                    </div>
+                    <div class="card-raised" style="padding:12px;display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <strong style="font-size:12px;color:#fff;display:block;">vendor-prime-logistics</strong>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">hardware_supply, shipping</span>
+                        </div>
+                        <span class="tag tag-vendor">VENDOR</span>
+                    </div>
+                    <div class="card-raised" style="padding:12px;display:flex;align-items:center;justify-content:space-between;border-left:3px solid var(--red);">
+                        <div>
+                            <strong style="font-size:12px;color:#f87171;display:block;">vendor-rogue-actor</strong>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#fca5a5;">unverified_supplier</span>
+                        </div>
+                        <span class="tag tag-flagged">FLAGGED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escrow Transactions & Timeline -->
+            <div class="card" style="display:flex;flex-direction:column;height:420px;">
+                <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;">
+                    <h2 style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
+                        <span class="material-symbols-outlined" style="color:var(--blue-hi);font-size:18px;">account_balance_wallet</span>
+                        Escrow Transactions & Timeline
+                    </h2>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">Memory Bank</span>
+                </div>
+                <div id="transactions-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;">
+                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;">#txn-escrow-8801</span>
+                            <span class="tag tag-escrowed">ESCROWED</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-dim);display:flex;gap:16px;">
+                            <span>Buyer: <code style="color:#fff;">buyer-enterprise-01</code></span>
+                            <span>Vendor: <code style="color:#fff;">vendor-prime-logistics</code></span>
+                        </div>
+                        <div style="font-size:13px;font-weight:800;color:#fff;">
+                            Escrow Amount: $5,000.00 <span style="font-size:11px;color:var(--text-dim);font-weight:400;">simulated</span>
+                        </div>
+                        <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);border-top:1px solid #222b3d;padding-top:4px;">
+                            Timeline: ESCROWED → PENDING DELIVERY
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credit Bureau -->
+            <div class="card" style="display:flex;flex-direction:column;height:420px;">
+                <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;gap:8px;">
+                    <span class="material-symbols-outlined" style="color:var(--green-hi);font-size:18px;">shield_with_heart</span>
+                    <h2 style="font-size:13px;font-weight:700;color:#fff;">Credit Bureau</h2>
+                </div>
+                <div id="reputation-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;">
+                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <strong style="font-size:11px;color:#fff;">vendor-prime-logistics</strong>
+                            <span class="tag tag-vendor">Quality: 100%</span>
+                        </div>
+                        <div class="well progress-track">
+                            <div class="progress-fill" style="background:var(--green);width:100%;"></div>
+                        </div>
+                        <div style="font-size:10px;color:var(--text-dim);display:flex;justify-content:space-between;">
+                            <span>Completed Txns: 1</span>
+                            <span>Security Violations: <strong style="color:var(--green-hi);">0</strong></span>
+                        </div>
+                    </div>
+                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--red);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <strong style="font-size:11px;color:#f87171;">vendor-rogue-actor</strong>
+                            <span class="tag tag-unrated">Trust: Unrated</span>
+                        </div>
+                        <div class="well progress-track">
+                            <div class="progress-fill" style="background:#374151;width:0%;"></div>
+                        </div>
+                        <div style="font-size:10px;color:var(--text-dim);display:flex;justify-content:space-between;">
+                            <span>Completed Txns: 0</span>
+                            <span>Security Violations: <strong style="color:#f87171;">3</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal / Audit Log (Sunken Well) with Severity Legend -->
+        <div class="card" style="display:flex;flex-direction:column;height:280px;margin-bottom:20px;">
+            <div style="padding:10px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;background:#121620;">
+                <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">
+                    <span class="material-symbols-outlined" style="font-size:15px;color:var(--purple-hi);">terminal</span>
+                    Live OpenTelemetry Audit Stream (Google Cloud Trace Integration)
+                </h2>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="led led-green led-pulse"></span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dimmer);">INGESTING</span>
+                </div>
+            </div>
+            
+            <div id="audit-list" class="well scr" style="flex:1;margin:8px 8px 4px 8px;padding:10px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;flex-direction:column;gap:4px;">
+                <div style="color:var(--text-dim);">[14:02:11] &lt;escrow_mediator_agent&gt; [ESCROW] Funds held — txn-1787819953 — $5,000.00 simulated (buyer-enterprise-01 → vendor-prime-logistics)</div>
+                <div style="color:#f87171;font-weight:700;background:#3b0d0c;padding:6px 8px;border-radius:4px;border-left:3px solid var(--red);">
+                    [14:03:46] &lt;escrow_mediator_agent&gt; [SECURITY GUARD] Claim blocked — HMAC signature mismatch — spoofed payload signature detected from agent 'vendor-rogue-actor'
+                </div>
+            </div>
+
+            <!-- Audit Stream Color Legend -->
+            <div style="padding:6px 16px 8px 16px;display:flex;align-items:center;gap:16px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);border-top:1px solid #1c2331;">
+                <span style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:8px;height:8px;border-radius:2px;background:var(--green-hi);display:inline-block;"></span>
+                    Green = Verified / Released
+                </span>
+                <span style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:8px;height:8px;border-radius:2px;background:var(--red-hi);display:inline-block;"></span>
+                    Red = Security Violation / Blocked
+                </span>
+                <span style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:8px;height:8px;border-radius:2px;background:var(--purple-hi);display:inline-block;"></span>
+                    Purple/Blue = System / Escrow Event
+                </span>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function setOnline(data) {
+            document.getElementById('hdr-led').className = 'led led-green led-pulse';
+            document.getElementById('hdr-status-text').style.color = 'var(--green-hi)';
+            document.getElementById('hdr-status-text').innerText = 'Escrow Live';
+            document.getElementById('hdr-status-badge').style.borderColor = 'var(--green)';
+            
+            document.getElementById('sidebar-led').className = 'led led-green';
+            document.getElementById('sidebar-guard').style.color = 'var(--green-hi)';
+            document.getElementById('sidebar-guard').innerHTML = '<span id="sidebar-led" class="led led-green"></span> VIGILANT GUARD ACTIVE';
+            
+            if (data.gcp_project) document.getElementById('hdr-project').innerText = data.gcp_project;
+            if (data.model) document.getElementById('hdr-model').innerText = data.model;
+        }
+
+        function setOffline() {
+            document.getElementById('hdr-led').className = 'led led-red';
+            document.getElementById('hdr-status-text').style.color = 'var(--red-hi)';
+            document.getElementById('hdr-status-text').innerText = 'Offline';
+            document.getElementById('hdr-status-badge').style.borderColor = 'var(--red)';
+            
+            document.getElementById('sidebar-led').className = 'led led-amber';
+            document.getElementById('sidebar-guard').style.color = 'var(--text-dimmer)';
+            document.getElementById('sidebar-guard').innerHTML = '<span id="sidebar-led" class="led led-amber"></span> GUARD STANDBY';
+        }
+
+        async function fetchState() {
+            try {
+                const res = await fetch('/api/state');
+                const data = await res.json();
+                setOnline(data);
+                renderState(data);
+            } catch (err) {
+                setOffline();
+            }
+        }
+
+        function renderState(data) {
+            if (!data) return;
+
+            // 1. Render Agent Registry
+            if (data.agents && data.agents.length > 0) {
+                document.getElementById('registry-list').innerHTML = data.agents.map(a => {
+                    const isFlagged = a.agent_id.includes('rogue');
+                    const tagClass = a.agent_type === 'buyer' ? 'tag-buyer' : (isFlagged ? 'tag-flagged' : 'tag-vendor');
+                    const tagText = isFlagged ? 'FLAGGED' : a.agent_type.toUpperCase();
+                    return `
+                    <div class="card-raised" style="padding:12px;display:flex;align-items:center;justify-content:space-between;${isFlagged ? 'border-left:3px solid var(--red);' : ''}">
+                        <div>
+                            <strong style="font-size:12px;color:${isFlagged ? '#f87171' : '#fff'};display:block;">${a.agent_id}</strong>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">${a.capabilities ? a.capabilities.join(', ') : 'none'}</span>
+                        </div>
+                        <span class="tag ${tagClass}">${tagText}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            // 2. Render Transactions & Timeline
+            if (data.transactions && data.transactions.length > 0) {
+                document.getElementById('transactions-list').innerHTML = data.transactions.map(t => {
+                    const statusTag = t.status === 'released' ? 'tag-released' : (t.status === 'disputed' ? 'tag-disputed' : 'tag-escrowed');
+                    const borderStyle = t.status === 'disputed' ? 'border-left:3px solid var(--red);' : (t.status === 'released' ? 'border-left:3px solid var(--green);' : '');
+                    const timelineStr = t.timeline ? t.timeline.join(' → ') : t.status.toUpperCase();
+                    return `
+                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;${borderStyle}">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;">${t.transaction_id}</span>
+                            <span class="tag ${statusTag}">${t.status.toUpperCase()}</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-dim);display:flex;gap:16px;">
+                            <span>Buyer: <code style="color:#fff;">${t.buyer_id}</code></span>
+                            <span>Vendor: <code style="color:#fff;">${t.vendor_id}</code></span>
+                        </div>
+                        <div style="font-size:13px;font-weight:800;color:#fff;">
+                            Escrow Amount: $${t.amount ? t.amount.toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} <span style="font-size:11px;color:var(--text-dim);font-weight:400;">simulated</span>
+                        </div>
+                        <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);border-top:1px solid #222b3d;padding-top:4px;">
+                            Timeline: ${timelineStr}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            // 3. Render Credit Bureau (Separating Quality Score from Violations)
+            if (data.reputation && data.reputation.length > 0) {
+                document.getElementById('reputation-list').innerHTML = data.reputation.map(r => {
+                    const hasViolations = (r.security_flags || 0) > 0;
+                    const isUnrated = (r.total_transactions || 0) === 0;
+                    
+                    let scoreBadge = '';
+                    let progressWidth = '0%';
+                    let progressBg = 'var(--green)';
+
+                    if (isUnrated) {
+                        scoreBadge = '<span class="tag tag-unrated">Trust: Unrated</span>';
+                        progressWidth = '0%';
+                        progressBg = '#374151';
+                    } else {
+                        const pct = Math.round((r.quality_score || 1.0) * 100);
+                        scoreBadge = `<span class="tag tag-vendor">Quality: ${pct}%</span>`;
+                        progressWidth = `${pct}%`;
+                        progressBg = 'var(--green)';
+                    }
+
+                    return `
+                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;${hasViolations ? 'border-left:3px solid var(--red);' : ''}">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <strong style="font-size:11px;color:${hasViolations ? '#f87171' : '#fff'};">${r.agent_id}</strong>
+                            ${scoreBadge}
+                        </div>
+                        <div class="well progress-track">
+                            <div class="progress-fill" style="background:${progressBg};width:${progressWidth};"></div>
+                        </div>
+                        <div style="font-size:10px;color:var(--text-dim);display:flex;justify-content:space-between;">
+                            <span>Completed Txns: ${r.total_transactions || 0}</span>
+                            <span>Security Violations: <strong style="color:${hasViolations ? '#f87171' : 'var(--green-hi)'};">${r.security_flags || 0}</strong></span>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            // 4. Render Audit Logs with Formatted Severity Tags
+            if (data.audit_logs && data.audit_logs.length > 0) {
+                document.getElementById('audit-list').innerHTML = data.audit_logs.map(log => {
+                    const isSecurityBlock = log.step && (log.step.includes('rejected') || log.step.includes('security'));
+                    const isReleased = log.step && (log.step.includes('released') || log.step.includes('reputation'));
+                    
+                    let rowStyle = 'color:var(--text-dim);';
+                    if (isSecurityBlock) {
+                        rowStyle = 'color:#f87171;font-weight:700;background:#3b0d0c;padding:6px 8px;border-radius:4px;border-left:3px solid var(--red);';
+                    } else if (isReleased) {
+                        rowStyle = 'color:#6ee7b7;background:#064e3b33;padding:4px 8px;border-radius:4px;border-left:3px solid var(--green);';
+                    }
+
+                    return `
+                    <div style="${rowStyle}">
+                        <span style="color:var(--text-dimmer);">[${new Date(log.timestamp * 1000).toLocaleTimeString()}]</span>
+                        <span style="color:var(--purple-hi);">&lt;${log.actor}&gt;</span>
+                        <span style="color:${isSecurityBlock ? '#fca5a5' : '#fff'};">${log.details || log.step}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        async function triggerAction(endpoint) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const result = await res.json();
+                if (result.security_flag || (result.reason && result.reason.includes('SECURITY GUARD'))) {
+                    showAlert('SECURITY GUARD INTERVENTION', result.reason);
+                }
+                fetchState();
+            } catch (err) {
+                console.error("Action failed:", err);
+            }
+        }
+
+        function showAlert(title, msg) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = msg;
+            document.getElementById('alert-banner').classList.add('visible');
+            setTimeout(() => document.getElementById('alert-banner').classList.remove('visible'), 6000);
+        }
+
+        fetchState();
+        setInterval(fetchState, 3000);
+    </script>
+</body>
+</html>
