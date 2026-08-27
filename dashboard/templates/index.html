@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Agent Trust Ledger — Credit Bureau for AI Agents</title>
+    <title>Agent Trust Ledger — Enterprise Agent Control Plane</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
     <style>
@@ -43,11 +43,11 @@
             flex-direction: column;
             padding-top: 56px;
             padding-left: 240px;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
         }
 
-        /* ===== SKEUOMORPHIC PRIMITIVES ===== */
+        /* ===== SKEUOMORPHIC & NEUMORPHIC PRIMITIVES ===== */
         .card {
             background: var(--panel);
             border: 1px solid var(--border-hi);
@@ -78,17 +78,18 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            padding: 10px 16px;
+            padding: 8px 14px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: transform 0.06s, box-shadow 0.06s, border-bottom-width 0.06s;
             user-select: none;
             color: #fff;
+            text-decoration: none;
         }
         .btn:active {
             transform: translateY(2px);
@@ -120,6 +121,14 @@
         }
         .btn-green:hover { background: #10b981; }
 
+        .btn-ghost {
+            background: #1e2536;
+            border: 1px solid #334155;
+            border-bottom: 2px solid #0f172a;
+            color: var(--text);
+        }
+        .btn-ghost:hover { background: #2d3748; color: #fff; }
+
         /* ===== LED INDICATORS ===== */
         .led { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .led-green { background: var(--green-hi); box-shadow: 0 0 6px var(--green-hi), inset 0 0 2px #fff; }
@@ -128,7 +137,7 @@
         @keyframes pulse-led { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
         .led-pulse { animation: pulse-led 2s infinite; }
 
-        /* ===== BADGE ===== */
+        /* ===== BADGES & TAGS ===== */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -142,18 +151,6 @@
             font-size: 11px;
         }
 
-        /* ===== PROGRESS BAR (INSET) ===== */
-        .progress-track {
-            height: 8px;
-            border-radius: 4px;
-            padding: 2px;
-        }
-        .progress-fill {
-            height: 100%;
-            border-radius: 3px;
-        }
-
-        /* ===== TAG ===== */
         .tag {
             padding: 2px 8px;
             border-radius: 4px;
@@ -168,13 +165,46 @@
         .tag-released { background: #064e3b; border: 1px solid var(--green); color: #6ee7b7; }
         .tag-disputed { background: #450a0a; border: 1px solid var(--red); color: #fca5a5; }
         .tag-unrated { background: #1f2937; border: 1px solid #374151; color: #9ca3af; }
+        .tag-approval { background: #451a03; border: 1px solid #d97706; color: #fde047; }
+
+        /* ===== AUTONOMY MODE SELECTOR ===== */
+        .mode-group {
+            display: inline-flex;
+            background: #090c12;
+            border: 1px solid #222b3d;
+            border-radius: 6px;
+            padding: 2px;
+            gap: 2px;
+        }
+        .mode-btn {
+            padding: 4px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .mode-btn.active {
+            background: #1e293b;
+            color: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid #334155;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-track { height: 8px; border-radius: 4px; padding: 2px; }
+        .progress-fill { height: 100%; border-radius: 3px; }
 
         /* ===== SCROLLBAR ===== */
         .scr::-webkit-scrollbar { width: 5px; }
         .scr::-webkit-scrollbar-track { background: var(--inset); }
         .scr::-webkit-scrollbar-thumb { background: #263042; border-radius: 3px; }
 
-        /* ===== HEADER ===== */
+        /* ===== HEADER & SIDEBAR ===== */
         .top-bar {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 50;
             height: 56px; display: flex; align-items: center; justify-content: space-between;
@@ -184,7 +214,6 @@
             box-shadow: 0 3px 10px #05070a;
         }
 
-        /* ===== SIDEBAR ===== */
         .sidebar {
             position: fixed; left: 0; top: 0; width: 240px; height: 100vh;
             z-index: 40; display: flex; flex-direction: column;
@@ -194,24 +223,78 @@
             box-shadow: 3px 0 10px #050710;
         }
 
-        /* ===== LAYOUT ===== */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            color: var(--text-dim);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.15s;
+        }
+        .nav-item:hover { background: #161c2b; color: #fff; }
+        .nav-item.active {
+            background: #1a2234;
+            color: #fff;
+            border-left-color: var(--purple-hi);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        /* ===== LAYOUT & KPI ===== */
         .main { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px; }
+        .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+        .kpi-card {
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .kpi-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; color: var(--text-dimmer); letter-spacing: 0.05em; }
+        .kpi-value { font-size: 18px; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace; }
+
         .grid-3 { display: grid; grid-template-columns: 4fr 5fr 3fr; gap: 20px; }
 
-        /* ===== ALERT BANNER ===== */
-        .alert-banner {
-            background: #3b0d0c;
-            border: 2px solid var(--red);
-            border-radius: 10px;
-            padding: 12px 16px;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 0 20px rgba(220,38,38,0.3);
+        /* ===== MODAL & DRAWER ===== */
+        .drawer-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            z-index: 100; display: none; justify-content: flex-end;
+            backdrop-filter: blur(2px);
         }
-        .alert-banner.visible { display: flex; }
+        .drawer-overlay.open { display: flex; }
+        .drawer {
+            width: 520px; max-width: 100%; height: 100vh;
+            background: var(--panel);
+            border-left: 2px solid var(--border-hi);
+            display: flex; flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+            animation: slideLeft 0.2s ease-out;
+        }
+        @keyframes slideLeft { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
-        @media (max-width: 1280px) { .grid-3 { grid-template-columns: 1fr; } }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            z-index: 110; display: none; align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-card {
+            width: 460px; max-width: 90%;
+            background: var(--panel);
+            border: 2px solid var(--border-hi);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            padding: 20px;
+        }
+
+        .tab-view { display: none; }
+        .tab-view.active { display: flex; flex-direction: column; gap: 20px; }
+
+        @media (max-width: 1280px) {
+            .grid-3 { grid-template-columns: 1fr; }
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 768px) {
             body { padding-left: 0; }
             .sidebar { display: none; }
@@ -227,10 +310,20 @@
                 <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:20px;">shield</span>
             </div>
             <span style="font-weight:800;font-size:16px;color:#fff;letter-spacing:-0.01em;">Agent Trust Ledger</span>
-            <span class="badge" style="font-size:10px;color:var(--purple-hi);">FORTIFIED FLEET</span>
+            <span class="badge" style="font-size:10px;color:var(--purple-hi);">ENTERPRISE CONTROL PLANE</span>
         </div>
 
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <!-- Autonomy Mode Switcher -->
+            <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dimmer);text-transform:uppercase;">Autonomy Mode:</span>
+                <div class="mode-group">
+                    <button class="mode-btn" id="mode-manual" onclick="setAutonomyMode('manual')">Manual</button>
+                    <button class="mode-btn active" id="mode-guarded" onclick="setAutonomyMode('guarded_auto')">Guarded Auto</button>
+                    <button class="mode-btn" id="mode-full" onclick="setAutonomyMode('full_auto')">Full Auto</button>
+                </div>
+            </div>
+
             <div class="badge">
                 <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-dim);">cloud</span>
                 <span style="color:var(--text-dim);">GCP: <strong id="hdr-project" style="color:#fff;">{{ gcp_project if gcp_project else 'massive-house-506806-t6' }}</strong></span>
@@ -246,19 +339,39 @@
         </div>
     </header>
 
-    <!-- ====== SIDEBAR ====== -->
+    <!-- ====== SIDEBAR NAVIGATION ====== -->
     <nav class="sidebar">
         <div style="padding:16px;border-bottom:1px solid #1c2331;">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dimmer);">Command Deck</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dimmer);">Navigation</div>
             <div id="sidebar-guard" style="margin-top:8px;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dimmer);">
                 <span id="sidebar-led" class="led led-amber"></span>
                 GUARD STANDBY
             </div>
         </div>
-        <div style="padding:10px;display:flex;flex-direction:column;gap:4px;">
-            <div class="card-raised" style="padding:10px;display:flex;align-items:center;gap:8px;color:#fff;font-size:11px;font-weight:700;">
-                <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:18px;">dashboard</span>
+        <div style="padding:10px 0;display:flex;flex-direction:column;gap:2px;">
+            <div class="nav-item active" onclick="switchTab('overview')">
+                <span class="material-symbols-outlined" style="font-size:18px;">dashboard</span>
                 Overview & Ledger
+            </div>
+            <div class="nav-item" onclick="switchTab('transactions')">
+                <span class="material-symbols-outlined" style="font-size:18px;">account_balance_wallet</span>
+                Transactions
+            </div>
+            <div class="nav-item" onclick="switchTab('registry')">
+                <span class="material-symbols-outlined" style="font-size:18px;">badge</span>
+                Agent Registry & Policies
+            </div>
+            <div class="nav-item" onclick="switchTab('security')">
+                <span class="material-symbols-outlined" style="font-size:18px;">gpp_maybe</span>
+                Security Center
+            </div>
+            <div class="nav-item" onclick="switchTab('reputation')">
+                <span class="material-symbols-outlined" style="font-size:18px;">shield_with_heart</span>
+                Credit Bureau
+            </div>
+            <div class="nav-item" onclick="switchTab('audit')">
+                <span class="material-symbols-outlined" style="font-size:18px;">terminal</span>
+                Audit & Traces
             </div>
         </div>
         <div style="margin-top:auto;padding:12px 16px;border-top:1px solid #1c2331;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dimmer);">
@@ -270,8 +383,8 @@
     <!-- ====== MAIN CONTENT ====== -->
     <main class="main">
 
-        <!-- Alert Banner -->
-        <div id="alert-banner" class="alert-banner">
+        <!-- Global Security Intervention Banner -->
+        <div id="alert-banner" class="card" style="background:#3b0d0c;border:2px solid var(--red);border-radius:10px;padding:12px 16px;display:none;align-items:center;justify-content:space-between;box-shadow:0 0 20px rgba(220,38,38,0.3);">
             <div style="display:flex;align-items:center;gap:12px;">
                 <div style="width:40px;height:40px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;">
                     <span class="material-symbols-outlined" style="color:#fff;font-size:22px;">warning</span>
@@ -281,189 +394,296 @@
                     <p id="alert-message" style="font-size:11px;color:#fecaca;margin-top:2px;">Spoofed payload detected and blocked.</p>
                 </div>
             </div>
-            <button onclick="document.getElementById('alert-banner').classList.remove('visible')" style="width:32px;height:32px;border-radius:6px;background:#7f1d1d;border:1px solid #991b1b;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+            <button onclick="document.getElementById('alert-banner').style.display='none'" style="width:32px;height:32px;border-radius:6px;background:#7f1d1d;border:1px solid #991b1b;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;">
                 <span class="material-symbols-outlined" style="font-size:16px;">close</span>
             </button>
         </div>
 
-        <!-- Hero Section with Security & Trust Guard Disclosure -->
-        <section class="card" style="padding:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
-            <div style="max-width:620px;">
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-                    <span class="tag tag-buyer">Fortified Enterprise Fleet</span>
-                    <span class="tag" style="background:#1e1b4b;border:1px solid #4338ca;color:#c7d2fe;" title="Custom pre-model security validation">
-                        Security & Trust Guard — Custom Pre-Model Validation (Model Armor Principles)
-                    </span>
-                </div>
-                <h1 style="font-size:22px;font-weight:800;color:#fff;line-height:1.3;margin-top:4px;">Escrow & Reputation Layer for Autonomous AI Commerce</h1>
-                <p style="font-size:12px;color:var(--text-dim);margin-top:8px;line-height:1.6;">
-                    Holding simulated demo funds securely, verifying identity signatures, screening claims with inline Security & Trust Guard callbacks, and maintaining public agent credit scores.
-                </p>
-                <div style="font-size:11px;color:var(--text-dimmer);margin-top:6px;font-style:italic;">
-                    * All monetary amounts displayed are simulated demo credits for test execution.
-                </div>
+        <!-- KPI Header Row -->
+        <section class="kpi-row">
+            <div class="card card-raised kpi-card">
+                <span class="kpi-label">Funds in Escrow</span>
+                <span class="kpi-value" id="kpi-funds">$0.00 <span style="font-size:11px;color:var(--text-dimmer);font-weight:400;">sim</span></span>
             </div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <button class="btn btn-purple" onclick="triggerAction('/api/action/initiate')">
-                    <span class="material-symbols-outlined" style="font-size:16px;">add_circle</span>
-                    + Initiate Escrow Txn (5,000 demo credits)
-                </button>
-                <button class="btn btn-red" onclick="triggerAction('/api/action/claim_spoofed')">
-                    <span class="material-symbols-outlined" style="font-size:16px;">gpp_bad</span>
-                    Inject Spoofed Claim
-                </button>
-                <button class="btn btn-green" onclick="triggerAction('/api/action/claim_legit')">
-                    <span class="material-symbols-outlined" style="font-size:16px;">verified</span>
-                    Submit Legit Claim
-                </button>
+            <div class="card card-raised kpi-card">
+                <span class="kpi-label">Active Operations</span>
+                <span class="kpi-value" id="kpi-active">0</span>
+            </div>
+            <div class="card card-raised kpi-card">
+                <span class="kpi-label">Needs Review</span>
+                <span class="kpi-value" style="color:var(--amber-hi);" id="kpi-review">0</span>
+            </div>
+            <div class="card card-raised kpi-card">
+                <span class="kpi-label">Security Blocks Today</span>
+                <span class="kpi-value" style="color:var(--red-hi);" id="kpi-blocks">0</span>
+            </div>
+            <div class="card card-raised kpi-card">
+                <span class="kpi-label">Network Health</span>
+                <span class="kpi-value" style="font-size:13px;color:var(--green-hi);" id="kpi-health">Healthy</span>
             </div>
         </section>
 
-        <!-- 3-Column Grid -->
-        <div class="grid-3">
-
-            <!-- Agent Registry -->
-            <div class="card" style="display:flex;flex-direction:column;height:420px;">
-                <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;">
-                    <h2 style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
-                        <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:18px;">memory</span>
-                        Agent Registry
-                    </h2>
-                    <span class="badge" style="font-size:10px;color:var(--green-hi);">
-                        <span class="led led-green" style="width:6px;height:6px;"></span> ACTIVE
-                    </span>
+        <!-- ==================== TAB 1: OVERVIEW & LEDGER ==================== -->
+        <div id="tab-overview" class="tab-view active">
+            <!-- Hero Action Section -->
+            <section class="card" style="padding:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+                <div style="max-width:620px;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                        <span class="tag tag-buyer">Fortified Enterprise Fleet</span>
+                        <span class="tag" style="background:#1e1b4b;border:1px solid #4338ca;color:#c7d2fe;" title="Custom pre-model security validation">
+                            Security & Trust Guard — Custom Pre-Model Validation (Model Armor Principles)
+                        </span>
+                    </div>
+                    <h1 style="font-size:20px;font-weight:800;color:#fff;line-height:1.3;margin-top:4px;">Autonomous AI Agent Escrow & Reputation Rail</h1>
+                    <p style="font-size:12px;color:var(--text-dim);margin-top:6px;line-height:1.5;">
+                        Holding simulated demo funds securely, verifying identity signatures, screening claims with inline Security & Trust Guard callbacks, and maintaining public agent credit scores.
+                    </p>
                 </div>
-                <div id="registry-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;">
-                    <div class="card-raised" style="padding:12px;display:flex;align-items:center;justify-content:space-between;">
-                        <div>
-                            <strong style="font-size:12px;color:#fff;display:block;">buyer-enterprise-01</strong>
-                            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">global_procurement, escrow</span>
-                        </div>
-                        <span class="tag tag-buyer">BUYER</span>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn btn-purple" onclick="triggerAction('/api/action/initiate')">
+                        <span class="material-symbols-outlined" style="font-size:16px;">add_circle</span>
+                        + Initiate Escrow (5,000 credits)
+                    </button>
+                    <button class="btn btn-red" onclick="triggerAction('/api/action/claim_spoofed')">
+                        <span class="material-symbols-outlined" style="font-size:16px;">gpp_bad</span>
+                        Inject Spoofed Claim
+                    </button>
+                    <button class="btn btn-green" onclick="triggerAction('/api/action/claim_legit')">
+                        <span class="material-symbols-outlined" style="font-size:16px;">verified</span>
+                        Submit Legit Claim
+                    </button>
+                </div>
+            </section>
+
+            <!-- 3-Column Grid -->
+            <div class="grid-3">
+                <!-- Agent Registry Overview -->
+                <div class="card" style="display:flex;flex-direction:column;height:400px;">
+                    <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;">
+                        <h2 style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
+                            <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:18px;">memory</span>
+                            Agent Registry
+                        </h2>
+                        <span class="badge" style="font-size:10px;color:var(--green-hi);">
+                            <span class="led led-green" style="width:6px;height:6px;"></span> ACTIVE
+                        </span>
                     </div>
-                    <div class="card-raised" style="padding:12px;display:flex;align-items:center;justify-content:space-between;">
-                        <div>
-                            <strong style="font-size:12px;color:#fff;display:block;">vendor-prime-logistics</strong>
-                            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">hardware_supply, shipping</span>
-                        </div>
-                        <span class="tag tag-vendor">VENDOR</span>
+                    <div id="registry-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;"></div>
+                </div>
+
+                <!-- Escrow Transactions Overview -->
+                <div class="card" style="display:flex;flex-direction:column;height:400px;">
+                    <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;">
+                        <h2 style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
+                            <span class="material-symbols-outlined" style="color:var(--blue-hi);font-size:18px;">account_balance_wallet</span>
+                            Escrow Transactions
+                        </h2>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">Click card for details</span>
                     </div>
-                    <div class="card-raised" style="padding:12px;display:flex;align-items:center;justify-content:space-between;border-left:3px solid var(--red);">
-                        <div>
-                            <strong style="font-size:12px;color:#f87171;display:block;">vendor-rogue-actor</strong>
-                            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#fca5a5;">unverified_supplier</span>
-                        </div>
-                        <span class="tag tag-flagged">FLAGGED</span>
+                    <div id="transactions-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;"></div>
+                </div>
+
+                <!-- Credit Bureau Overview -->
+                <div class="card" style="display:flex;flex-direction:column;height:400px;">
+                    <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;gap:8px;">
+                        <span class="material-symbols-outlined" style="color:var(--green-hi);font-size:18px;">shield_with_heart</span>
+                        <h2 style="font-size:13px;font-weight:700;color:#fff;">Credit Bureau</h2>
                     </div>
+                    <div id="reputation-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;"></div>
                 </div>
             </div>
 
-            <!-- Escrow Transactions & Timeline -->
-            <div class="card" style="display:flex;flex-direction:column;height:420px;">
-                <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;">
-                    <h2 style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
-                        <span class="material-symbols-outlined" style="color:var(--blue-hi);font-size:18px;">account_balance_wallet</span>
-                        Escrow Transactions & Timeline
+            <!-- Terminal Audit Stream -->
+            <div class="card" style="display:flex;flex-direction:column;height:260px;margin-bottom:10px;">
+                <div style="padding:10px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;background:#121620;">
+                    <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">
+                        <span class="material-symbols-outlined" style="font-size:15px;color:var(--purple-hi);">terminal</span>
+                        Live OpenTelemetry Audit Stream (Google Cloud Trace Integration)
                     </h2>
-                    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">Memory Bank</span>
-                </div>
-                <div id="transactions-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;">
-                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;">#txn-escrow-8801</span>
-                            <span class="tag tag-escrowed">ESCROWED</span>
-                        </div>
-                        <div style="font-size:11px;color:var(--text-dim);display:flex;gap:16px;">
-                            <span>Buyer: <code style="color:#fff;">buyer-enterprise-01</code></span>
-                            <span>Vendor: <code style="color:#fff;">vendor-prime-logistics</code></span>
-                        </div>
-                        <div style="font-size:13px;font-weight:800;color:#fff;">
-                            Escrow Amount: $5,000.00 <span style="font-size:11px;color:var(--text-dim);font-weight:400;">simulated</span>
-                        </div>
-                        <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);border-top:1px solid #222b3d;padding-top:4px;">
-                            Timeline: ESCROWED → PENDING DELIVERY
-                        </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span class="led led-green led-pulse"></span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dimmer);">INGESTING</span>
                     </div>
                 </div>
-            </div>
+                
+                <div id="audit-list" class="well scr" style="flex:1;margin:8px 8px 4px 8px;padding:10px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;flex-direction:column;gap:4px;"></div>
 
-            <!-- Credit Bureau -->
-            <div class="card" style="display:flex;flex-direction:column;height:420px;">
-                <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;gap:8px;">
-                    <span class="material-symbols-outlined" style="color:var(--green-hi);font-size:18px;">shield_with_heart</span>
-                    <h2 style="font-size:13px;font-weight:700;color:#fff;">Credit Bureau</h2>
-                </div>
-                <div id="reputation-list" class="scr" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;">
-                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <strong style="font-size:11px;color:#fff;">vendor-prime-logistics</strong>
-                            <span class="tag tag-vendor">Quality: 100%</span>
-                        </div>
-                        <div class="well progress-track">
-                            <div class="progress-fill" style="background:var(--green);width:100%;"></div>
-                        </div>
-                        <div style="font-size:10px;color:var(--text-dim);display:flex;justify-content:space-between;">
-                            <span>Completed Txns: 1</span>
-                            <span>Security Violations: <strong style="color:var(--green-hi);">0</strong></span>
-                        </div>
-                    </div>
-                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--red);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <strong style="font-size:11px;color:#f87171;">vendor-rogue-actor</strong>
-                            <span class="tag tag-unrated">Trust: Unrated</span>
-                        </div>
-                        <div class="well progress-track">
-                            <div class="progress-fill" style="background:#374151;width:0%;"></div>
-                        </div>
-                        <div style="font-size:10px;color:var(--text-dim);display:flex;justify-content:space-between;">
-                            <span>Completed Txns: 0</span>
-                            <span>Security Violations: <strong style="color:#f87171;">3</strong></span>
-                        </div>
-                    </div>
+                <div style="padding:6px 16px 8px 16px;display:flex;align-items:center;gap:16px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);border-top:1px solid #1c2331;">
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:var(--green-hi);display:inline-block;"></span> Green = Verified / Released</span>
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:var(--red-hi);display:inline-block;"></span> Red = Security Violation / Blocked</span>
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:var(--purple-hi);display:inline-block;"></span> Purple = System / Escrow Event</span>
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:var(--amber-hi);display:inline-block;"></span> Amber = Human Review Required</span>
                 </div>
             </div>
         </div>
 
-        <!-- Terminal / Audit Log (Sunken Well) with Severity Legend -->
-        <div class="card" style="display:flex;flex-direction:column;height:280px;margin-bottom:20px;">
-            <div style="padding:10px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;background:#121620;">
-                <h2 style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:8px;">
-                    <span class="material-symbols-outlined" style="font-size:15px;color:var(--purple-hi);">terminal</span>
-                    Live OpenTelemetry Audit Stream (Google Cloud Trace Integration)
-                </h2>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span class="led led-green led-pulse"></span>
-                    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dimmer);">INGESTING</span>
+        <!-- ==================== TAB 2: TRANSACTIONS ==================== -->
+        <div id="tab-transactions" class="tab-view">
+            <div class="card" style="padding:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+                    <div>
+                        <h2 style="font-size:16px;font-weight:800;color:#fff;">Escrow Operations Ledger</h2>
+                        <p style="font-size:11px;color:var(--text-dim);">Manage active holds, review verification evidence, and issue human-in-the-loop operator actions.</p>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-ghost" onclick="filterTransactions('all')">All</button>
+                        <button class="btn btn-ghost" onclick="filterTransactions('escrowed')">Escrowed</button>
+                        <button class="btn btn-ghost" onclick="filterTransactions('awaiting_human_approval')">Needs Review</button>
+                        <button class="btn btn-ghost" onclick="filterTransactions('released')">Released</button>
+                        <button class="btn btn-ghost" onclick="filterTransactions('paused')">Paused</button>
+                    </div>
+                </div>
+                <div id="transactions-table-container" class="scr" style="max-height:600px;overflow-y:auto;">
+                    <!-- Rendered by JS -->
                 </div>
             </div>
-            
-            <div id="audit-list" class="well scr" style="flex:1;margin:8px 8px 4px 8px;padding:10px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;flex-direction:column;gap:4px;">
-                <div style="color:var(--text-dim);">[14:02:11] &lt;escrow_mediator_agent&gt; [ESCROW] Funds held — txn-1787819953 — $5,000.00 simulated (buyer-enterprise-01 → vendor-prime-logistics)</div>
-                <div style="color:#f87171;font-weight:700;background:#3b0d0c;padding:6px 8px;border-radius:4px;border-left:3px solid var(--red);">
-                    [14:03:46] &lt;escrow_mediator_agent&gt; [SECURITY GUARD] Claim blocked — HMAC signature mismatch — spoofed payload signature detected from agent 'vendor-rogue-actor'
-                </div>
-            </div>
+        </div>
 
-            <!-- Audit Stream Color Legend -->
-            <div style="padding:6px 16px 8px 16px;display:flex;align-items:center;gap:16px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);border-top:1px solid #1c2331;">
-                <span style="display:flex;align-items:center;gap:4px;">
-                    <span style="width:8px;height:8px;border-radius:2px;background:var(--green-hi);display:inline-block;"></span>
-                    Green = Verified / Released
-                </span>
-                <span style="display:flex;align-items:center;gap:4px;">
-                    <span style="width:8px;height:8px;border-radius:2px;background:var(--red-hi);display:inline-block;"></span>
-                    Red = Security Violation / Blocked
-                </span>
-                <span style="display:flex;align-items:center;gap:4px;">
-                    <span style="width:8px;height:8px;border-radius:2px;background:var(--purple-hi);display:inline-block;"></span>
-                    Purple/Blue = System / Escrow Event
-                </span>
+        <!-- ==================== TAB 3: AGENT REGISTRY & POLICIES ==================== -->
+        <div id="tab-registry" class="tab-view">
+            <div class="card" style="padding:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div>
+                        <h2 style="font-size:16px;font-weight:800;color:#fff;">Enterprise Agent Registry & Governance</h2>
+                        <p style="font-size:11px;color:var(--text-dim);">Configure spend limits, capability boundaries, and pause or suspend agents.</p>
+                    </div>
+                </div>
+                <div id="agent-policies-container" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:14px;">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 4: SECURITY CENTER ==================== -->
+        <div id="tab-security" class="tab-view">
+            <div class="card" style="padding:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div>
+                        <h2 style="font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;">
+                            <span class="material-symbols-outlined" style="color:var(--red-hi);">gpp_maybe</span>
+                            Security Center & Incident Queue
+                        </h2>
+                        <p style="font-size:11px;color:var(--text-dim);">Investigate blocked prompt injections, signature spoofs, and manage agent sanctions.</p>
+                    </div>
+                </div>
+                <div id="security-incidents-container" class="scr" style="max-height:600px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 5: REPUTATION LEDGER ==================== -->
+        <div id="tab-reputation" class="tab-view">
+            <div class="card" style="padding:16px;">
+                <h2 style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px;">Credit Bureau Trust Ledger</h2>
+                <p style="font-size:11px;color:var(--text-dim);margin-bottom:14px;">Verifiable cross-session delivery reliability and security incident tracking.</p>
+                <div id="reputation-detailed-container" style="display:flex;flex-direction:column;gap:12px;">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 6: AUDIT & TRACES ==================== -->
+        <div id="tab-audit" class="tab-view">
+            <div class="card" style="padding:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+                    <div>
+                        <h2 style="font-size:16px;font-weight:800;color:#fff;">Searchable OpenTelemetry Audit Log</h2>
+                        <p style="font-size:11px;color:var(--text-dim);">Immutable verification trail synced with Google Cloud Trace spans.</p>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="text" id="audit-search-input" onkeyup="filterAuditLogs()" placeholder="Search transactions, agents, traces..." class="well" style="padding:6px 12px;color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;width:260px;outline:none;" />
+                    </div>
+                </div>
+                <div id="audit-detailed-container" class="well scr" style="height:540px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;">
+                    <!-- Rendered by JS -->
+                </div>
             </div>
         </div>
 
     </main>
 
+    <!-- ====== TRANSACTION DETAILS DRAWER ====== -->
+    <div id="txn-drawer" class="drawer-overlay" onclick="closeDrawer(event)">
+        <div class="drawer" onclick="event.stopPropagation()">
+            <div style="padding:16px 20px;border-bottom:1px solid #222b3d;display:flex;justify-content:space-between;align-items:center;background:#121620;">
+                <div>
+                    <span id="drw-id" style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:#fff;">txn-12345</span>
+                    <span id="drw-status" class="tag tag-escrowed" style="margin-left:8px;">ESCROWED</span>
+                </div>
+                <button onclick="document.getElementById('txn-drawer').classList.remove('open')" class="btn btn-ghost" style="padding:4px 8px;">✕</button>
+            </div>
+            
+            <div class="scr" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:18px;">
+                <!-- Basic Info -->
+                <div class="card-raised" style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+                        <span>Buyer: <strong id="drw-buyer" style="color:#fff;"></strong></span>
+                        <span>Vendor: <strong id="drw-vendor" style="color:#fff;"></strong></span>
+                    </div>
+                    <div style="font-size:16px;font-weight:800;color:#fff;">
+                        Amount: <span id="drw-amount" style="color:var(--green-hi);">$0.00</span> <span style="font-size:11px;color:var(--text-dimmer);font-weight:400;">simulated</span>
+                    </div>
+                </div>
+
+                <!-- Decision Reasoning & Confidence -->
+                <div class="card-raised" style="padding:14px;">
+                    <h4 style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:6px;">Decision & Security Analysis</h4>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-size:12px;color:var(--text);">Verification Confidence:</span>
+                        <span id="drw-confidence" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--green-hi);">96%</span>
+                    </div>
+                    <p id="drw-reason" style="font-size:11px;color:var(--text-dim);line-height:1.5;">Agent identity, transaction state, HMAC signature, and delivery evidence verified.</p>
+                </div>
+
+                <!-- Lifecycle Timeline -->
+                <div class="card-raised" style="padding:14px;">
+                    <h4 style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:10px;">Lifecycle Timeline</h4>
+                    <div id="drw-timeline" style="display:flex;flex-direction:column;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;">
+                        <!-- Timeline chips -->
+                    </div>
+                </div>
+
+                <!-- Operator Actions -->
+                <div class="card-raised" style="padding:14px;">
+                    <h4 style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:10px;">Human Operator Actions</h4>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <button id="btn-op-approve" class="btn btn-green" onclick="operatorApprove()">Approve Release</button>
+                        <button id="btn-op-refund" class="btn btn-red" onclick="operatorRefund()">Refund Buyer</button>
+                        <button id="btn-op-pause" class="btn btn-ghost" onclick="operatorPause()">Pause Operation</button>
+                        <button id="btn-op-resume" class="btn btn-purple" onclick="operatorResume()">Resume</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== JAVASCRIPT LOGIC ====== -->
     <script>
+        let globalState = {};
+        let activeTab = 'overview';
+        let currentSelectedTxnId = null;
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            const targetTab = document.getElementById('tab-' + tabId);
+            if (targetTab) targetTab.classList.add('active');
+            
+            event.currentTarget.classList.add('active');
+            renderState(globalState);
+        }
+
+        function setAutonomyMode(mode) {
+            fetch('/api/settings/autonomy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: mode })
+            }).then(() => fetchState());
+        }
+
         function setOnline(data) {
             document.getElementById('hdr-led').className = 'led led-green led-pulse';
             document.getElementById('hdr-status-text').style.color = 'var(--green-hi)';
@@ -472,10 +692,18 @@
             
             document.getElementById('sidebar-led').className = 'led led-green';
             document.getElementById('sidebar-guard').style.color = 'var(--green-hi)';
-            document.getElementById('sidebar-guard').innerHTML = '<span id="sidebar-led" class="led led-green"></span> VIGILANT GUARD ACTIVE';
+            document.getElementById('sidebar-guard').innerHTML = '<span class="led led-green"></span> VIGILANT GUARD ACTIVE';
             
             if (data.gcp_project) document.getElementById('hdr-project').innerText = data.gcp_project;
             if (data.model) document.getElementById('hdr-model').innerText = data.model;
+
+            // Autonomy buttons
+            if (data.autonomy) {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                if (data.autonomy.mode === 'manual') document.getElementById('mode-manual').classList.add('active');
+                if (data.autonomy.mode === 'guarded_auto') document.getElementById('mode-guarded').classList.add('active');
+                if (data.autonomy.mode === 'full_auto') document.getElementById('mode-full').classList.add('active');
+            }
         }
 
         function setOffline() {
@@ -486,13 +714,14 @@
             
             document.getElementById('sidebar-led').className = 'led led-amber';
             document.getElementById('sidebar-guard').style.color = 'var(--text-dimmer)';
-            document.getElementById('sidebar-guard').innerHTML = '<span id="sidebar-led" class="led led-amber"></span> GUARD STANDBY';
+            document.getElementById('sidebar-guard').innerHTML = '<span class="led led-amber"></span> GUARD STANDBY';
         }
 
         async function fetchState() {
             try {
                 const res = await fetch('/api/state');
                 const data = await res.json();
+                globalState = data;
                 setOnline(data);
                 renderState(data);
             } catch (err) {
@@ -503,70 +732,69 @@
         function renderState(data) {
             if (!data) return;
 
-            // 1. Render Agent Registry
-            if (data.agents && data.agents.length > 0) {
-                document.getElementById('registry-list').innerHTML = data.agents.map(a => {
-                    const isFlagged = a.agent_id.includes('rogue');
-                    const tagClass = a.agent_type === 'buyer' ? 'tag-buyer' : (isFlagged ? 'tag-flagged' : 'tag-vendor');
-                    const tagText = isFlagged ? 'FLAGGED' : a.agent_type.toUpperCase();
+            // 1. KPIs
+            if (data.kpis) {
+                document.getElementById('kpi-funds').innerHTML = '$' + (data.kpis.funds_in_escrow || 0).toLocaleString(undefined, {minimumFractionDigits: 2}) + ' <span style="font-size:11px;color:var(--text-dimmer);font-weight:400;">sim</span>';
+                document.getElementById('kpi-active').innerText = data.kpis.active_transactions || 0;
+                document.getElementById('kpi-review').innerText = data.kpis.needs_review || 0;
+                document.getElementById('kpi-blocks').innerText = data.kpis.security_blocks || 0;
+                document.getElementById('kpi-health').innerText = data.kpis.network_health || 'Healthy';
+            }
+
+            // 2. Overview Registry
+            const regList = document.getElementById('registry-list');
+            if (regList && data.agents) {
+                regList.innerHTML = data.agents.map(a => {
+                    const isFlagged = a.status === 'suspended' || a.agent_id.includes('rogue');
+                    const isPaused = a.status === 'paused';
+                    const tagClass = a.agent_type === 'buyer' ? 'tag-buyer' : (isFlagged ? 'tag-flagged' : (isPaused ? 'tag-approval' : 'tag-vendor'));
+                    const statusText = a.status ? a.status.toUpperCase() : a.agent_type.toUpperCase();
                     return `
                     <div class="card-raised" style="padding:12px;display:flex;align-items:center;justify-content:space-between;${isFlagged ? 'border-left:3px solid var(--red);' : ''}">
                         <div>
                             <strong style="font-size:12px;color:${isFlagged ? '#f87171' : '#fff'};display:block;">${a.agent_id}</strong>
                             <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">${a.capabilities ? a.capabilities.join(', ') : 'none'}</span>
                         </div>
-                        <span class="tag ${tagClass}">${tagText}</span>
+                        <span class="tag ${tagClass}">${statusText}</span>
                     </div>`;
                 }).join('');
             }
 
-            // 2. Render Transactions & Timeline
-            if (data.transactions && data.transactions.length > 0) {
-                document.getElementById('transactions-list').innerHTML = data.transactions.map(t => {
-                    const statusTag = t.status === 'released' ? 'tag-released' : (t.status === 'disputed' ? 'tag-disputed' : 'tag-escrowed');
-                    const borderStyle = t.status === 'disputed' ? 'border-left:3px solid var(--red);' : (t.status === 'released' ? 'border-left:3px solid var(--green);' : '');
+            // 3. Overview Transactions
+            const txnsList = document.getElementById('transactions-list');
+            if (txnsList && data.transactions) {
+                txnsList.innerHTML = data.transactions.map(t => {
+                    const statusTag = t.status === 'released' ? 'tag-released' : (t.status === 'disputed' ? 'tag-disputed' : (t.status === 'awaiting_human_approval' ? 'tag-approval' : 'tag-escrowed'));
+                    const borderStyle = t.status === 'disputed' ? 'border-left:3px solid var(--red);' : (t.status === 'released' ? 'border-left:3px solid var(--green);' : (t.status === 'awaiting_human_approval' ? 'border-left:3px solid var(--amber-hi);' : ''));
                     const timelineStr = t.timeline ? t.timeline.join(' → ') : t.status.toUpperCase();
                     return `
-                    <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;${borderStyle}">
+                    <div class="card-raised" onclick="openDrawer('${t.transaction_id}')" style="padding:12px;display:flex;flex-direction:column;gap:6px;cursor:pointer;${borderStyle}">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
                             <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;">${t.transaction_id}</span>
-                            <span class="tag ${statusTag}">${t.status.toUpperCase()}</span>
+                            <span class="tag ${statusTag}">${t.status.toUpperCase().replace('_', ' ')}</span>
                         </div>
-                        <div style="font-size:11px;color:var(--text-dim);display:flex;gap:16px;">
+                        <div style="font-size:11px;color:var(--text-dim);display:flex;gap:12px;">
                             <span>Buyer: <code style="color:#fff;">${t.buyer_id}</code></span>
                             <span>Vendor: <code style="color:#fff;">${t.vendor_id}</code></span>
                         </div>
                         <div style="font-size:13px;font-weight:800;color:#fff;">
                             Escrow Amount: $${t.amount ? t.amount.toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} <span style="font-size:11px;color:var(--text-dim);font-weight:400;">simulated</span>
                         </div>
-                        <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);border-top:1px solid #222b3d;padding-top:4px;">
+                        <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);border-top:1px solid #222b3d;padding-top:4px;">
                             Timeline: ${timelineStr}
                         </div>
                     </div>`;
                 }).join('');
             }
 
-            // 3. Render Credit Bureau (Separating Quality Score from Violations)
-            if (data.reputation && data.reputation.length > 0) {
-                document.getElementById('reputation-list').innerHTML = data.reputation.map(r => {
+            // 4. Overview Reputation
+            const repList = document.getElementById('reputation-list');
+            if (repList && data.reputation) {
+                repList.innerHTML = data.reputation.map(r => {
                     const hasViolations = (r.security_flags || 0) > 0;
                     const isUnrated = (r.total_transactions || 0) === 0;
-                    
-                    let scoreBadge = '';
-                    let progressWidth = '0%';
-                    let progressBg = 'var(--green)';
-
-                    if (isUnrated) {
-                        scoreBadge = '<span class="tag tag-unrated">Trust: Unrated</span>';
-                        progressWidth = '0%';
-                        progressBg = '#374151';
-                    } else {
-                        const pct = Math.round((r.quality_score || 1.0) * 100);
-                        scoreBadge = `<span class="tag tag-vendor">Quality: ${pct}%</span>`;
-                        progressWidth = `${pct}%`;
-                        progressBg = 'var(--green)';
-                    }
-
+                    const scoreBadge = isUnrated ? '<span class="tag tag-unrated">Trust: Unrated</span>' : `<span class="tag tag-vendor">Quality: ${Math.round((r.quality_score || 1.0) * 100)}%</span>`;
+                    const progressWidth = isUnrated ? '0%' : `${Math.round((r.quality_score || 1.0) * 100)}%`;
                     return `
                     <div class="card-raised" style="padding:12px;display:flex;flex-direction:column;gap:8px;${hasViolations ? 'border-left:3px solid var(--red);' : ''}">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -574,28 +802,28 @@
                             ${scoreBadge}
                         </div>
                         <div class="well progress-track">
-                            <div class="progress-fill" style="background:${progressBg};width:${progressWidth};"></div>
+                            <div class="progress-fill" style="background:${isUnrated ? '#374151' : 'var(--green)'};width:${progressWidth};"></div>
                         </div>
                         <div style="font-size:10px;color:var(--text-dim);display:flex;justify-content:space-between;">
-                            <span>Completed Txns: ${r.total_transactions || 0}</span>
-                            <span>Security Violations: <strong style="color:${hasViolations ? '#f87171' : 'var(--green-hi)'};">${r.security_flags || 0}</strong></span>
+                            <span>Completed: ${r.total_transactions || 0}</span>
+                            <span>Violations: <strong style="color:${hasViolations ? '#f87171' : 'var(--green-hi)'};">${r.security_flags || 0}</strong></span>
                         </div>
                     </div>`;
                 }).join('');
             }
 
-            // 4. Render Audit Logs with Formatted Severity Tags
-            if (data.audit_logs && data.audit_logs.length > 0) {
-                document.getElementById('audit-list').innerHTML = data.audit_logs.map(log => {
+            // 5. Overview Audit Log Stream
+            const auditList = document.getElementById('audit-list');
+            if (auditList && data.audit_logs) {
+                auditList.innerHTML = data.audit_logs.map(log => {
                     const isSecurityBlock = log.step && (log.step.includes('rejected') || log.step.includes('security'));
                     const isReleased = log.step && (log.step.includes('released') || log.step.includes('reputation'));
+                    const isOperator = log.actor && log.actor.includes('operator');
                     
                     let rowStyle = 'color:var(--text-dim);';
-                    if (isSecurityBlock) {
-                        rowStyle = 'color:#f87171;font-weight:700;background:#3b0d0c;padding:6px 8px;border-radius:4px;border-left:3px solid var(--red);';
-                    } else if (isReleased) {
-                        rowStyle = 'color:#6ee7b7;background:#064e3b33;padding:4px 8px;border-radius:4px;border-left:3px solid var(--green);';
-                    }
+                    if (isSecurityBlock) rowStyle = 'color:#f87171;font-weight:700;background:#3b0d0c;padding:6px 8px;border-radius:4px;border-left:3px solid var(--red);';
+                    else if (isReleased) rowStyle = 'color:#6ee7b7;background:#064e3b33;padding:4px 8px;border-radius:4px;border-left:3px solid var(--green);';
+                    else if (isOperator) rowStyle = 'color:#fde047;background:#451a0333;padding:4px 8px;border-radius:4px;border-left:3px solid var(--amber);';
 
                     return `
                     <div style="${rowStyle}">
@@ -605,6 +833,192 @@
                     </div>`;
                 }).join('');
             }
+
+            // 6. Tab 2: Transactions Table
+            const txnTable = document.getElementById('transactions-table-container');
+            if (txnTable && data.transactions) {
+                txnTable.innerHTML = data.transactions.map(t => `
+                    <div class="card-raised" style="padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <strong style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#fff;">${t.transaction_id}</strong>
+                                <span class="tag tag-escrowed">${t.status.toUpperCase()}</span>
+                            </div>
+                            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+                                Buyer: <strong style="color:#fff;">${t.buyer_id}</strong> | Vendor: <strong style="color:#fff;">${t.vendor_id}</strong>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:15px;font-weight:800;color:var(--green-hi);">$${t.amount ? t.amount.toLocaleString() : '0'} simulated</div>
+                            <button class="btn btn-ghost" onclick="openDrawer('${t.transaction_id}')" style="margin-top:4px;padding:4px 10px;font-size:10px;">Inspect & Govern →</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 7. Tab 3: Agent Policies & Controls
+            const policyContainer = document.getElementById('agent-policies-container');
+            if (policyContainer && data.agents) {
+                policyContainer.innerHTML = data.agents.map(a => {
+                    const isSuspended = a.status === 'suspended';
+                    const isPaused = a.status === 'paused';
+                    return `
+                    <div class="card-raised" style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <strong style="font-size:13px;color:#fff;">${a.agent_id}</strong>
+                            <span class="tag ${isSuspended ? 'tag-flagged' : (isPaused ? 'tag-approval' : 'tag-vendor')}">${a.status ? a.status.toUpperCase() : 'ACTIVE'}</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;">
+                            Type: ${a.agent_type.toUpperCase()}<br/>
+                            Capabilities: ${a.capabilities.join(', ')}<br/>
+                            Max Spend: $${a.policy ? a.policy.max_transaction_amount : '10,000'} sim
+                        </div>
+                        <div style="display:flex;gap:6px;margin-top:6px;">
+                            ${isSuspended ? `<button class="btn btn-green" onclick="setAgentStatus('${a.agent_id}', 'active')">Re-activate</button>` : `<button class="btn btn-red" onclick="setAgentStatus('${a.agent_id}', 'suspended')">Suspend Agent</button>`}
+                            ${isPaused ? `<button class="btn btn-purple" onclick="setAgentStatus('${a.agent_id}', 'active')">Resume</button>` : `<button class="btn btn-ghost" onclick="setAgentStatus('${a.agent_id}', 'paused')">Pause</button>`}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            // 8. Tab 4: Security Center Incidents
+            const secContainer = document.getElementById('security-incidents-container');
+            if (secContainer && data.security_events) {
+                if (data.security_events.length === 0) {
+                    secContainer.innerHTML = '<div style="color:var(--text-dim);padding:20px;text-align:center;">No open security incidents. Fleet guardrails fully active.</div>';
+                } else {
+                    secContainer.innerHTML = data.security_events.map(e => `
+                        <div class="card-raised" style="padding:14px;border-left:4px solid var(--red);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                            <div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span class="tag tag-flagged">${e.severity.toUpperCase()}</span>
+                                    <strong style="font-family:'JetBrains Mono',monospace;color:#fff;">${e.event_type}</strong>
+                                    <span style="font-size:11px;color:var(--text-dimmer);">${new Date(e.created_at * 1000).toLocaleString()}</span>
+                                </div>
+                                <div style="font-size:11px;color:#fca5a5;margin-top:4px;">${e.reason}</div>
+                                <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:2px;">
+                                    Agent: <code>${e.agent_id}</code> | Txn: <code>${e.transaction_id}</code>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:6px;">
+                                <button class="btn btn-red" onclick="setAgentStatus('${e.agent_id}', 'suspended')">Sanction Agent</button>
+                                <button class="btn btn-ghost" onclick="resolveSecurityIncident('${e.event_id}')">Dismiss</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // 9. Tab 5: Reputation Ledger Table
+            const repDetail = document.getElementById('reputation-detailed-container');
+            if (repDetail && data.reputation) {
+                repDetail.innerHTML = data.reputation.map(r => `
+                    <div class="card-raised" style="padding:16px;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <strong style="font-size:13px;color:#fff;">${r.agent_id}</strong>
+                            <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">
+                                Successful Deliveries: ${r.successful_deliveries || 0} | Disputed: ${r.disputed_deliveries || 0} | Security Violations: ${r.security_flags || 0}
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:16px;font-weight:800;color:var(--green-hi);">${r.total_transactions > 0 ? Math.round(r.quality_score * 100) + '%' : 'Unrated'}</div>
+                            <span class="tag ${r.security_flags > 0 ? 'tag-flagged' : 'tag-vendor'}">${r.security_flags > 0 ? 'SANCTIONED' : 'TRUSTED'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 10. Tab 6: Audit Detailed
+            filterAuditLogs();
+        }
+
+        // --- Drawer Control ---
+        function openDrawer(txnId) {
+            currentSelectedTxnId = txnId;
+            const txn = (globalState.transactions || []).find(t => t.transaction_id === txnId);
+            if (!txn) return;
+
+            document.getElementById('drw-id').innerText = txn.transaction_id;
+            document.getElementById('drw-status').innerText = txn.status.toUpperCase().replace('_', ' ');
+            document.getElementById('drw-buyer').innerText = txn.buyer_id;
+            document.getElementById('drw-vendor').innerText = txn.vendor_id;
+            document.getElementById('drw-amount').innerText = '$' + (txn.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('drw-confidence').innerText = `${Math.round((txn.verification_confidence || 0.96) * 100)}%`;
+            document.getElementById('drw-reason').innerText = txn.last_security_incident || txn.hold_reason || 'Agent identity, HMAC signature, and delivery conditions successfully evaluated.';
+
+            const timelineEl = document.getElementById('drw-timeline');
+            timelineEl.innerHTML = (txn.timeline || ['ESCROWED']).map(step => `
+                <div style="display:flex;align-items:center;gap:8px;color:${step.includes('BLOCKED') || step.includes('VIOLATION') ? '#f87171' : (step.includes('RELEASED') || step.includes('VERIFIED') ? '#6ee7b7' : '#94a3b8')}">
+                    <span>${step.includes('BLOCKED') ? '✕' : '✓'}</span>
+                    <span>${step}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('txn-drawer').classList.add('open');
+        }
+
+        function closeDrawer(event) {
+            document.getElementById('txn-drawer').classList.remove('open');
+        }
+
+        // --- Operator Actions ---
+        function operatorApprove() {
+            if (!currentSelectedTxnId) return;
+            fetch(`/api/transactions/${currentSelectedTxnId}/approve`, { method: 'POST' })
+                .then(() => { fetchState(); closeDrawer(); });
+        }
+
+        function operatorRefund() {
+            if (!currentSelectedTxnId) return;
+            fetch(`/api/transactions/${currentSelectedTxnId}/refund`, { method: 'POST' })
+                .then(() => { fetchState(); closeDrawer(); });
+        }
+
+        function operatorPause() {
+            if (!currentSelectedTxnId) return;
+            fetch(`/api/transactions/${currentSelectedTxnId}/pause`, { method: 'POST' })
+                .then(() => { fetchState(); closeDrawer(); });
+        }
+
+        function operatorResume() {
+            if (!currentSelectedTxnId) return;
+            fetch(`/api/transactions/${currentSelectedTxnId}/resume`, { method: 'POST' })
+                .then(() => { fetchState(); closeDrawer(); });
+        }
+
+        function setAgentStatus(agentId, status) {
+            fetch(`/api/agents/${agentId}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status })
+            }).then(() => fetchState());
+        }
+
+        function resolveSecurityIncident(eventId) {
+            fetch(`/api/security/events/${eventId}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'resolved' })
+            }).then(() => fetchState());
+        }
+
+        function filterAuditLogs() {
+            const query = (document.getElementById('audit-search-input')?.value || '').toLowerCase();
+            const container = document.getElementById('audit-detailed-container');
+            if (!container || !globalState.audit_logs) return;
+
+            const filtered = globalState.audit_logs.filter(log => {
+                const text = `${log.actor} ${log.step} ${log.details} ${log.transaction_id || ''}`.toLowerCase();
+                return text.includes(query);
+            });
+
+            container.innerHTML = filtered.map(log => `
+                <div style="padding:6px;border-bottom:1px solid #1c2331;display:flex;gap:10px;">
+                    <span style="color:var(--text-dimmer);">[${new Date(log.timestamp * 1000).toLocaleTimeString()}]</span>
+                    <span style="color:var(--purple-hi);">&lt;${log.actor}&gt;</span>
+                    <span style="color:#fff;">${log.details || log.step}</span>
+                </div>
+            `).join('');
         }
 
         async function triggerAction(endpoint) {
@@ -627,8 +1041,9 @@
         function showAlert(title, msg) {
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-message').innerText = msg;
-            document.getElementById('alert-banner').classList.add('visible');
-            setTimeout(() => document.getElementById('alert-banner').classList.remove('visible'), 6000);
+            const banner = document.getElementById('alert-banner');
+            banner.style.display = 'flex';
+            setTimeout(() => { banner.style.display = 'none'; }, 6000);
         }
 
         fetchState();

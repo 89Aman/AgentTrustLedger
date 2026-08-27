@@ -1,8 +1,8 @@
 import os
 import time
-from typing import Optional, Any
+from typing import Optional, Any, List, Dict
 from common.config import GCP_PROJECT
-from common.schemas import AgentRegistration, ReputationRecord, LedgerEntry
+from common.schemas import AgentRegistration, ReputationRecord, LedgerEntry, AutonomySettings, SecurityEvent
 
 class FirestoreClient:
     """
@@ -25,6 +25,8 @@ class FirestoreClient:
             self._mock_transactions = {}
             self._mock_reputation = {}
             self._mock_ledgers = {}
+            self._mock_settings = {"autonomy": AutonomySettings().model_dump()}
+            self._mock_security_events = {}
 
     # --- Agent Registry Operations ---
     def save_agent(self, agent: AgentRegistration):
@@ -39,6 +41,52 @@ class FirestoreClient:
             return self._mock_agents.get(agent_id)
         doc = self.db.collection("agents").document(agent_id).get()
         return doc.to_dict() if doc.exists else None
+
+    def list_agents(self) -> List[dict]:
+        if self.use_mock:
+            return list(self._mock_agents.values())
+        docs = self.db.collection("agents").stream()
+        return [d.to_dict() for d in docs]
+
+    # --- Settings Operations (Autonomy Mode & Policies) ---
+    def get_autonomy_settings(self) -> AutonomySettings:
+        if self.use_mock:
+            data = self._mock_settings.get("autonomy", {})
+            return AutonomySettings(**data)
+        doc = self.db.collection("settings").document("autonomy").get()
+        if doc.exists:
+            return AutonomySettings(**doc.to_dict())
+        default = AutonomySettings()
+        self.save_autonomy_settings(default)
+        return default
+
+    def save_autonomy_settings(self, settings: AutonomySettings):
+        if self.use_mock:
+            self._mock_settings["autonomy"] = settings.model_dump()
+            return
+        self.db.collection("settings").document("autonomy").set(settings.model_dump())
+
+    # --- Security Events Operations ---
+    def save_security_event(self, event: SecurityEvent):
+        if self.use_mock:
+            self._mock_security_events[event.event_id] = event.model_dump()
+            return
+        self.db.collection("security_events").document(event.event_id).set(event.model_dump())
+
+    def list_security_events(self) -> List[dict]:
+        if self.use_mock:
+            events = list(self._mock_security_events.values())
+            events.sort(key=lambda x: x.get("created_at", 0), reverse=True)
+            return events
+        docs = self.db.collection("security_events").order_by("created_at", direction="DESCENDING").stream()
+        return [d.to_dict() for d in docs]
+
+    def update_security_event_status(self, event_id: str, status: str):
+        if self.use_mock:
+            if event_id in self._mock_security_events:
+                self._mock_security_events[event_id]["status"] = status
+            return
+        self.db.collection("security_events").document(event_id).update({"status": status})
 
     # --- Transaction Operations (Escrow State & Memory Bank) ---
     def save_transaction(self, transaction_id: str, data: dict):
@@ -56,6 +104,14 @@ class FirestoreClient:
             return self._mock_transactions.get(transaction_id)
         doc = self.db.collection("transactions").document(transaction_id).get()
         return doc.to_dict() if doc.exists else None
+
+    def list_transactions(self) -> List[dict]:
+        if self.use_mock:
+            txns = list(self._mock_transactions.values())
+            txns.sort(key=lambda x: x.get("created_at", 0), reverse=True)
+            return txns
+        docs = self.db.collection("transactions").order_by("created_at", direction="DESCENDING").stream()
+        return [d.to_dict() for d in docs]
 
     def add_audit_log(self, transaction_id: str, log_entry: dict):
         log_entry["timestamp"] = log_entry.get("timestamp", time.time())
