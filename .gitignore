@@ -1,0 +1,17 @@
+# Secrets & Local Environment
+.env
+.env.local
+
+# IDE & Editor
+.vscode/
+.idea/
+
+# Python Cache & Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Scratch & Planning Context
+agent-trust-ledger-context.md
+implementation_plan.md
