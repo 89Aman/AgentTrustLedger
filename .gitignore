@@ -12,6 +12,7 @@ __pycache__/
 *$py.class
 .pytest_cache/
 
-# Scratch & Planning Context
+# Internal Docs & Scratch Context
+docs/
 agent-trust-ledger-context.md
 implementation_plan.md
