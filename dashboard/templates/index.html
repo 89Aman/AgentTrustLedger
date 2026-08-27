@@ -172,28 +172,73 @@
             display: inline-flex;
             background: #090c12;
             border: 1px solid #222b3d;
-            border-radius: 6px;
-            padding: 2px;
-            gap: 2px;
+            border-radius: 7px;
+            padding: 3px;
+            gap: 3px;
+            box-shadow: inset 1px 1px 3px #04060a;
         }
         .mode-btn {
-            padding: 4px 10px;
+            padding: 5px 12px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 10px;
             font-weight: 700;
-            border: none;
+            border: 1px solid transparent;
             background: transparent;
             color: var(--text-dim);
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.1s;
+            transition: all 0.12s ease;
+            user-select: none;
+        }
+        .mode-btn:hover {
+            color: #fff;
+            background: #151b27;
+        }
+        .mode-btn:active {
+            transform: scale(0.95);
         }
         .mode-btn.active {
-            background: #1e293b;
             color: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-            border: 1px solid #334155;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12);
         }
+        .mode-btn#mode-manual.active {
+            background: #78350f;
+            border-color: #d97706;
+            color: #fef3c7;
+        }
+        .mode-btn#mode-guarded.active {
+            background: #3b0764;
+            border-color: #8b5cf6;
+            color: #f5f3ff;
+        }
+        .mode-btn#mode-full.active {
+            background: #064e3b;
+            border-color: #10b981;
+            color: #ecfdf5;
+        }
+
+        /* ===== TOAST NOTIFICATION ===== */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 200;
+            background: #161b26;
+            border: 1px solid #2d3748;
+            border-bottom: 2px solid #05070a;
+            border-left: 3px solid var(--green-hi);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.85);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #fff;
+            animation: slideUp 0.15s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         /* ===== PROGRESS BAR ===== */
         .progress-track { height: 8px; border-radius: 4px; padding: 2px; }
@@ -676,12 +721,43 @@
             renderState(globalState);
         }
 
+        function showToast(msg, icon = 'check_circle', isAlert = false) {
+            let toast = document.getElementById('toast-notify');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-notify';
+                toast.className = 'toast-notify';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px;color:${isAlert ? 'var(--red-hi)' : 'var(--green-hi)'};">${icon}</span><span>${msg}</span>`;
+            toast.style.borderLeftColor = isAlert ? 'var(--red-hi)' : 'var(--green-hi)';
+            toast.style.display = 'flex';
+            if (window._toastTimeout) clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
         function setAutonomyMode(mode) {
+            // 1. Instant 0ms Optimistic UI Switch
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            if (mode === 'manual') document.getElementById('mode-manual')?.classList.add('active');
+            if (mode === 'guarded_auto') document.getElementById('mode-guarded')?.classList.add('active');
+            if (mode === 'full_auto') document.getElementById('mode-full')?.classList.add('active');
+            
+            if (globalState.autonomy) globalState.autonomy.mode = mode;
+            
+            const modeNames = { manual: 'Manual Approval', guarded_auto: 'Guarded Auto', full_auto: 'Full Auto' };
+            showToast(`Autonomy Mode: ${modeNames[mode] || mode} Active`);
+
+            // 2. Fast Async Sync
             fetch('/api/settings/autonomy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mode: mode })
-            }).then(() => fetchState());
+            }).then(r => r.json()).then(data => {
+                if (data.autonomy) globalState.autonomy = data.autonomy;
+            }).catch(err => {
+                console.error("Autonomy update failed:", err);
+            });
         }
 
         function setOnline(data) {
@@ -980,29 +1056,34 @@
         // --- Operator Actions ---
         function operatorApprove() {
             if (!currentSelectedTxnId) return;
+            showToast(`Approved release for ${currentSelectedTxnId}`);
             fetch(`/api/transactions/${currentSelectedTxnId}/approve`, { method: 'POST' })
                 .then(() => { fetchState(); closeDrawer(); });
         }
 
         function operatorRefund() {
             if (!currentSelectedTxnId) return;
+            showToast(`Issued refund for ${currentSelectedTxnId}`, 'undo', true);
             fetch(`/api/transactions/${currentSelectedTxnId}/refund`, { method: 'POST' })
                 .then(() => { fetchState(); closeDrawer(); });
         }
 
         function operatorPause() {
             if (!currentSelectedTxnId) return;
+            showToast(`Paused transaction ${currentSelectedTxnId}`, 'pause_circle', true);
             fetch(`/api/transactions/${currentSelectedTxnId}/pause`, { method: 'POST' })
                 .then(() => { fetchState(); closeDrawer(); });
         }
 
         function operatorResume() {
             if (!currentSelectedTxnId) return;
+            showToast(`Resumed transaction ${currentSelectedTxnId}`);
             fetch(`/api/transactions/${currentSelectedTxnId}/resume`, { method: 'POST' })
                 .then(() => { fetchState(); closeDrawer(); });
         }
 
         function setAgentStatus(agentId, status) {
+            showToast(`Agent ${agentId} status set to: ${status.toUpperCase()}`, status === 'suspended' ? 'block' : 'check_circle', status === 'suspended');
             fetch(`/api/agents/${agentId}/status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1011,6 +1092,7 @@
         }
 
         function resolveSecurityIncident(eventId) {
+            showToast(`Security incident dismissed`);
             fetch(`/api/security/events/${eventId}/resolve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
