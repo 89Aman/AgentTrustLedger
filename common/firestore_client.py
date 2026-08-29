@@ -1,7 +1,7 @@
 import os
 import time
 from typing import Optional, Any, List, Dict
-from common.config import GCP_PROJECT
+from common.config import GOOGLE_CLOUD_PROJECT, USE_FIRESTORE
 from common.schemas import AgentRegistration, ReputationRecord, LedgerEntry, AutonomySettings, SecurityEvent
 
 class FirestoreClient:
@@ -9,24 +9,39 @@ class FirestoreClient:
     Wrapper around Google Cloud Firestore client.
     Supports in-memory mock fallback when running in pure offline testing mode.
     """
-    def __init__(self, use_mock: bool = False):
-        self.use_mock = use_mock
+    def __init__(self, use_mock: Optional[bool] = None):
+        if use_mock is not None:
+            self.use_mock = use_mock
+        else:
+            self.use_mock = not USE_FIRESTORE
+
         self.db = None
-        if not use_mock:
+        self.backend_mode = "in-memory fallback"
+
+        # Always initialize mock containers to prevent attribute errors
+        self._mock_agents = {}
+        self._mock_transactions = {}
+        self._mock_reputation = {}
+        self._mock_ledgers = {}
+        self._mock_settings = {"autonomy": AutonomySettings().model_dump()}
+        self._mock_security_events = {}
+        self._mock_audit_events = []
+
+        if not self.use_mock:
             try:
                 from google.cloud import firestore
-                self.db = firestore.Client(project=GCP_PROJECT)
+                self.db = firestore.Client(project=GOOGLE_CLOUD_PROJECT)
+                if os.getenv("FIRESTORE_EMULATOR_HOST"):
+                    self.backend_mode = "Firestore emulator"
+                else:
+                    self.backend_mode = "Firestore (production)"
+                print(f"[FirestoreClient] Initialized: {self.backend_mode} (project={GOOGLE_CLOUD_PROJECT})")
             except Exception as e:
                 print(f"[FirestoreClient] Cloud client initialization skipped/failed ({e}), using in-memory store.")
                 self.use_mock = True
-
-        if self.use_mock:
-            self._mock_agents = {}
-            self._mock_transactions = {}
-            self._mock_reputation = {}
-            self._mock_ledgers = {}
-            self._mock_settings = {"autonomy": AutonomySettings().model_dump()}
-            self._mock_security_events = {}
+                self.backend_mode = "in-memory fallback"
+        else:
+            print("[FirestoreClient] Initialized: in-memory fallback mode")
 
     # --- Agent Registry Operations ---
     def save_agent(self, agent: AgentRegistration):
@@ -110,20 +125,41 @@ class FirestoreClient:
             txns = list(self._mock_transactions.values())
             txns.sort(key=lambda x: x.get("created_at", 0), reverse=True)
             return txns
-        docs = self.db.collection("transactions").order_by("created_at", direction="DESCENDING").stream()
-        return [d.to_dict() for d in docs]
+        try:
+            docs = self.db.collection("transactions").order_by("created_at", direction="DESCENDING").stream()
+            return [d.to_dict() for d in docs]
+        except Exception:
+            docs = self.db.collection("transactions").stream()
+            txns = [d.to_dict() for d in docs]
+            txns.sort(key=lambda x: x.get("created_at", 0), reverse=True)
+            return txns
 
     def add_audit_log(self, transaction_id: str, log_entry: dict):
         log_entry["timestamp"] = log_entry.get("timestamp", time.time())
+        log_entry["transaction_id"] = transaction_id
         if self.use_mock:
             txn = self._mock_transactions.get(transaction_id, {})
             audit = txn.get("audit_log", [])
             audit.append(log_entry)
             txn["audit_log"] = audit
             self._mock_transactions[transaction_id] = txn
+            self._mock_audit_events.append(log_entry)
             return
         doc_ref = self.db.collection("transactions").document(transaction_id)
         doc_ref.collection("audit_log").add(log_entry)
+        self.db.collection("audit_events").add(log_entry)
+
+    def list_audit_events(self) -> List[dict]:
+        if self.use_mock:
+            return sorted(self._mock_audit_events, key=lambda x: x.get("timestamp", 0), reverse=True)
+        try:
+            docs = self.db.collection("audit_events").order_by("timestamp", direction="DESCENDING").limit(100).stream()
+            return [d.to_dict() for d in docs]
+        except Exception:
+            docs = self.db.collection("audit_events").limit(100).stream()
+            events = [d.to_dict() for d in docs]
+            events.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+            return events
 
     # --- Reputation & Audit Ledger Operations ---
     def save_reputation(self, record: ReputationRecord):
@@ -138,6 +174,12 @@ class FirestoreClient:
             return self._mock_reputation.get(agent_id)
         doc = self.db.collection("reputation").document(agent_id).get()
         return doc.to_dict() if doc.exists else None
+
+    def list_reputation(self) -> List[dict]:
+        if self.use_mock:
+            return list(self._mock_reputation.values())
+        docs = self.db.collection("reputation").stream()
+        return [d.to_dict() for d in docs]
 
     def add_ledger_entry(self, entry: LedgerEntry):
         if self.use_mock:
