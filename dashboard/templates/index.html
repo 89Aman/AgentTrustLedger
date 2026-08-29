@@ -369,9 +369,14 @@
                 </div>
             </div>
 
+            <div class="badge" id="hdr-official-registry-badge" style="cursor:pointer;" onclick="verifyOfficialRegistry()" title="Click to verify Google Cloud Agent Registry">
+                <span id="hdr-official-registry-led" class="led led-amber"></span>
+                <span>Agent Registry: <strong id="hdr-official-registry-status" style="color:var(--amber-hi);">Checking...</strong></span>
+                <span class="material-symbols-outlined" style="font-size:12px;color:var(--text-dim);">refresh</span>
+            </div>
             <div class="badge">
                 <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-dim);">cloud</span>
-                <span style="color:var(--text-dim);">GCP: <strong id="hdr-project" style="color:#fff;">{{ gcp_project if gcp_project else 'massive-house-506806-t6' }}</strong></span>
+                <span style="color:var(--text-dim);">GCP: <strong id="hdr-project" style="color:#fff;">{{ gcp_project if gcp_project else '' }}</strong></span>
             </div>
             <div class="badge">
                 <span class="material-symbols-outlined" style="font-size:14px;color:var(--blue-hi);">memory</span>
@@ -507,7 +512,7 @@
                     <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;">
                         <h2 style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
                             <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:18px;">memory</span>
-                            Agent Registry
+                            Application Agent Registry (Firestore)
                         </h2>
                         <span class="badge" style="font-size:10px;color:var(--green-hi);">
                             <span class="led led-green" style="width:6px;height:6px;"></span> ACTIVE
@@ -809,6 +814,31 @@
             }
         }
 
+        async function verifyOfficialRegistry() {
+            const statusEl = document.getElementById('hdr-official-registry-status');
+            const ledEl = document.getElementById('hdr-official-registry-led');
+            if (statusEl) statusEl.innerText = 'Verifying...';
+            if (ledEl) ledEl.className = 'led led-amber';
+            try {
+                const res = await fetch('/api/registry/verify');
+                const data = await res.json();
+                if (data.status === 'Registered') {
+                    if (statusEl) { statusEl.innerText = 'Registered (3/3)'; statusEl.style.color = 'var(--green-hi)'; }
+                    if (ledEl) ledEl.className = 'led led-green';
+                    showToast('Google Cloud Agent Registry: All 3 agents verified registered!');
+                } else if (data.status === 'Partially registered') {
+                    if (statusEl) { statusEl.innerText = `Partially registered (${data.registered_count}/${data.total_expected})`; statusEl.style.color = 'var(--amber-hi)'; }
+                    if (ledEl) ledEl.className = 'led led-amber';
+                } else {
+                    if (statusEl) { statusEl.innerText = 'Not registered'; statusEl.style.color = 'var(--text-dim)'; }
+                    if (ledEl) ledEl.className = 'led led-amber';
+                }
+            } catch (e) {
+                if (statusEl) { statusEl.innerText = 'Verification failed'; statusEl.style.color = 'var(--red-hi)'; }
+                if (ledEl) ledEl.className = 'led led-red';
+            }
+        }
+
         async function fetchState() {
             try {
                 const res = await fetch('/api/state');
@@ -823,6 +853,15 @@
 
         function renderState(data) {
             if (!data) return;
+
+            if (data.model) {
+                const hm = document.getElementById('hdr-model');
+                if (hm) hm.innerText = data.model;
+            }
+            if (data.gcp_project) {
+                const hp = document.getElementById('hdr-project');
+                if (hp) hp.innerText = data.gcp_project;
+            }
 
             // 1. KPIs
             if (data.kpis) {
