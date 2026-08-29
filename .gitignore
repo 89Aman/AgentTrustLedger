@@ -1,6 +1,7 @@
 # Secrets & Local Environment
 .env
 .env.local
+.env.production
 
 # IDE & Editor
 .vscode/
@@ -11,8 +12,22 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+venv/
+.venv/
+
+# Credentials & Keys
+*.pem
+*.key
+service-account*.json
+
+# Generated deployment cards (contain active Cloud Run URL)
+deployment
+!deployment/.gitkeep
+!deployment/README.md
 
 # Internal Docs & Scratch Context
 docs/
 agent-trust-ledger-context.md
 implementation_plan.md
+devpost.md
+scripts/*
