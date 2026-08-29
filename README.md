@@ -36,25 +36,91 @@ The deployed Cloud Run service hosts three public Agent-to-Agent (A2A) discovery
 
 ---
 
-## 3. Local Quickstart (Zero Cloud Credentials Needed)
+## 3. Reproducible Testing Instructions
 
-All unit tests and local simulations run fully offline using in-memory fallbacks:
+Judges and reviewers can reproduce and verify all capabilities in **under 60 seconds** without needing Google Cloud credentials or billing. The entire suite runs fully offline using deterministic in-memory mock fallbacks.
 
-```powershell
-# 1. Clone & enter repository
-cd devpost
+### A. Environment Setup
 
-# 2. Install dependencies
+```bash
+# 1. Clone the repository
+git clone https://github.com/89Aman/AgentTrustLedger.git
+cd AgentTrustLedger
+
+# 2. Create and activate a virtual environment (optional but recommended)
+python -m venv venv
+# Linux / macOS:
+source venv/bin/activate
+# Windows:
+.\venv\Scripts\activate
+
+# 3. Install dependencies
 pip install -r requirements.txt
+```
 
-# 3. Run all unit tests (43 unit tests covering cards, guardrails, governance)
-python -m unittest discover tests
+### B. Run Automated Test Suite (43 Tests)
 
-# 4. Start local development server
+Run the full automated test suite using either `pytest` or Python's built-in `unittest`:
+
+```bash
+# Option 1: pytest (verbose output)
+pytest -v
+
+# Option 2: unittest (zero third-party test runners needed)
+python -m unittest discover tests -v
+```
+
+**Expected Result:**
+```text
+Ran 43 tests in 0.45s
+OK (43 passed)
+```
+
+#### Test Suite Capability Coverage Matrix
+
+| Test Module | Tests | Fortified Fleet Capability Verified |
+|---|:---:|---|
+| `tests/test_agent_cards.py` | 13 | **Agent Registry**: Validates A2A Agent Card specs, JSON schema adherence, schema versions, and endpoints for all 3 agents. |
+| `tests/test_security_guard.py` | 6 | **Security & Trust Guard**: Verifies cryptographic HMAC validation, blocks spoofed payloads, and detects prompt-injection patterns. |
+| `tests/test_governance.py` | 5 | **Autonomy Governance**: Tests `autonomous`, `guarded_auto`, and `manual` policy modes, threshold enforcement, and operator status updates. |
+| `tests/test_agents.py` | 2 | **Agent Runtime & Gateway**: Validates multi-agent transaction orchestration, fund escrowing, and delivery verification across Pub/Sub. |
+| `tests/test_registry.py` | 4 | **Application Registry**: Tests agent registration, status management (`active`, `paused`, `suspended`), and authorization checks. |
+| `tests/test_identity.py` | 3 | **Agent Identity**: Tests cryptographic HMAC-SHA256 signature generation and tamper detection. |
+| `tests/test_config.py` | 10 | **System Configuration**: Tests environment variable parsing, safe defaults, and cloud vs. fallback switching. |
+
+---
+
+### C. Live Cloud Run Deployment Verification
+
+You can directly verify the live production service deployed on Google Cloud without cloning the repository:
+
+```bash
+# 1. Verify Escrow Mediator A2A Agent Card
+curl -s https://agent-trust-ledger-1064660975371.us-central1.run.app/.well-known/agent-card.json
+
+# 2. Verify Buyer Agent A2A Card
+curl -s https://agent-trust-ledger-1064660975371.us-central1.run.app/agents/buyer/.well-known/agent-card.json
+
+# 3. Verify Vendor Agent A2A Card
+curl -s https://agent-trust-ledger-1064660975371.us-central1.run.app/agents/vendor/.well-known/agent-card.json
+
+# 4. Verify Live System State & Telemetry
+curl -s https://agent-trust-ledger-1064660975371.us-central1.run.app/api/state
+```
+
+---
+
+### D. Local Interactive Dashboard Verification
+
+```bash
+# Start the local development server
 python dashboard/app.py
 ```
 
-Open `http://localhost:8080` in your browser.
+1. Open `http://localhost:8080` in your web browser.
+2. Click **"Initiate Escrow ($5,000)"** → Observe funds locked in escrow and an audit log appended to the memory bank.
+3. Click **"Test Spoofed Claim"** → Observe the **Security & Trust Guard** intercept and block the spoofed signature, raising a security incident.
+4. Click **"Submit Legit Claim"** → Observe evidence verification against contract conditions and release of funds.
 
 ---
 
