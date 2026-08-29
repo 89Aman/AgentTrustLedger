@@ -172,28 +172,73 @@
             display: inline-flex;
             background: #090c12;
             border: 1px solid #222b3d;
-            border-radius: 6px;
-            padding: 2px;
-            gap: 2px;
+            border-radius: 7px;
+            padding: 3px;
+            gap: 3px;
+            box-shadow: inset 1px 1px 3px #04060a;
         }
         .mode-btn {
-            padding: 4px 10px;
+            padding: 5px 12px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 10px;
             font-weight: 700;
-            border: none;
+            border: 1px solid transparent;
             background: transparent;
             color: var(--text-dim);
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.1s;
+            transition: all 0.12s ease;
+            user-select: none;
+        }
+        .mode-btn:hover {
+            color: #fff;
+            background: #151b27;
+        }
+        .mode-btn:active {
+            transform: scale(0.95);
         }
         .mode-btn.active {
-            background: #1e293b;
             color: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-            border: 1px solid #334155;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12);
         }
+        .mode-btn#mode-manual.active {
+            background: #78350f;
+            border-color: #d97706;
+            color: #fef3c7;
+        }
+        .mode-btn#mode-guarded.active {
+            background: #3b0764;
+            border-color: #8b5cf6;
+            color: #f5f3ff;
+        }
+        .mode-btn#mode-full.active {
+            background: #064e3b;
+            border-color: #10b981;
+            color: #ecfdf5;
+        }
+
+        /* ===== TOAST NOTIFICATION ===== */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 200;
+            background: #161b26;
+            border: 1px solid #2d3748;
+            border-bottom: 2px solid #05070a;
+            border-left: 3px solid var(--green-hi);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.85);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #fff;
+            animation: slideUp 0.15s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         /* ===== PROGRESS BAR ===== */
         .progress-track { height: 8px; border-radius: 4px; padding: 2px; }
@@ -324,9 +369,14 @@
                 </div>
             </div>
 
+            <div class="badge" id="hdr-official-registry-badge" style="cursor:pointer;" onclick="verifyOfficialRegistry()" title="Click to verify Google Cloud Agent Registry">
+                <span id="hdr-official-registry-led" class="led led-amber"></span>
+                <span>Agent Registry: <strong id="hdr-official-registry-status" style="color:var(--amber-hi);">Checking...</strong></span>
+                <span class="material-symbols-outlined" style="font-size:12px;color:var(--text-dim);">refresh</span>
+            </div>
             <div class="badge">
                 <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-dim);">cloud</span>
-                <span style="color:var(--text-dim);">GCP: <strong id="hdr-project" style="color:#fff;">{{ gcp_project if gcp_project else 'massive-house-506806-t6' }}</strong></span>
+                <span style="color:var(--text-dim);">GCP: <strong id="hdr-project" style="color:#fff;">{{ gcp_project if gcp_project else '' }}</strong></span>
             </div>
             <div class="badge">
                 <span class="material-symbols-outlined" style="font-size:14px;color:var(--blue-hi);">memory</span>
@@ -462,7 +512,7 @@
                     <div style="padding:12px 16px;border-bottom:1px solid #222b3d;display:flex;align-items:center;justify-content:space-between;">
                         <h2 style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;">
                             <span class="material-symbols-outlined" style="color:var(--purple-hi);font-size:18px;">memory</span>
-                            Agent Registry
+                            Application Agent Registry (Firestore)
                         </h2>
                         <span class="badge" style="font-size:10px;color:var(--green-hi);">
                             <span class="led led-green" style="width:6px;height:6px;"></span> ACTIVE
@@ -676,45 +726,117 @@
             renderState(globalState);
         }
 
+        function showToast(msg, icon = 'check_circle', isAlert = false) {
+            let toast = document.getElementById('toast-notify');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-notify';
+                toast.className = 'toast-notify';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px;color:${isAlert ? 'var(--red-hi)' : 'var(--green-hi)'};">${icon}</span><span>${msg}</span>`;
+            toast.style.borderLeftColor = isAlert ? 'var(--red-hi)' : 'var(--green-hi)';
+            toast.style.display = 'flex';
+            if (window._toastTimeout) clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
         function setAutonomyMode(mode) {
+            // 1. Instant 0ms Optimistic UI Switch
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            if (mode === 'manual') document.getElementById('mode-manual')?.classList.add('active');
+            if (mode === 'guarded_auto') document.getElementById('mode-guarded')?.classList.add('active');
+            if (mode === 'full_auto') document.getElementById('mode-full')?.classList.add('active');
+            
+            if (globalState.autonomy) globalState.autonomy.mode = mode;
+            
+            const modeNames = { manual: 'Manual Approval', guarded_auto: 'Guarded Auto', full_auto: 'Full Auto' };
+            showToast(`Autonomy Mode: ${modeNames[mode] || mode} Active`);
+
+            // 2. Fast Async Sync
             fetch('/api/settings/autonomy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mode: mode })
-            }).then(() => fetchState());
+            }).then(r => r.json()).then(data => {
+                if (data.autonomy) globalState.autonomy = data.autonomy;
+            }).catch(err => {
+                console.error("Autonomy update failed:", err);
+            });
         }
 
         function setOnline(data) {
-            document.getElementById('hdr-led').className = 'led led-green led-pulse';
-            document.getElementById('hdr-status-text').style.color = 'var(--green-hi)';
-            document.getElementById('hdr-status-text').innerText = 'Escrow Live';
-            document.getElementById('hdr-status-badge').style.borderColor = 'var(--green)';
+            const hdrLed = document.getElementById('hdr-led');
+            if (hdrLed) hdrLed.className = 'led led-green led-pulse';
+            const hdrStatusText = document.getElementById('hdr-status-text');
+            if (hdrStatusText) {
+                hdrStatusText.style.color = 'var(--green-hi)';
+                hdrStatusText.innerText = 'Escrow Live';
+            }
+            const hdrStatusBadge = document.getElementById('hdr-status-badge');
+            if (hdrStatusBadge) hdrStatusBadge.style.borderColor = 'var(--green)';
             
-            document.getElementById('sidebar-led').className = 'led led-green';
-            document.getElementById('sidebar-guard').style.color = 'var(--green-hi)';
-            document.getElementById('sidebar-guard').innerHTML = '<span class="led led-green"></span> VIGILANT GUARD ACTIVE';
+            const sidebarGuard = document.getElementById('sidebar-guard');
+            if (sidebarGuard) {
+                sidebarGuard.style.color = 'var(--green-hi)';
+                sidebarGuard.innerHTML = '<span id="sidebar-led" class="led led-green"></span> VIGILANT GUARD ACTIVE';
+            }
             
-            if (data.gcp_project) document.getElementById('hdr-project').innerText = data.gcp_project;
-            if (data.model) document.getElementById('hdr-model').innerText = data.model;
+            const hdrProject = document.getElementById('hdr-project');
+            if (hdrProject && data.gcp_project) hdrProject.innerText = data.gcp_project;
+            const hdrModel = document.getElementById('hdr-model');
+            if (hdrModel && data.model) hdrModel.innerText = data.model;
 
             // Autonomy buttons
             if (data.autonomy) {
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                if (data.autonomy.mode === 'manual') document.getElementById('mode-manual').classList.add('active');
-                if (data.autonomy.mode === 'guarded_auto') document.getElementById('mode-guarded').classList.add('active');
-                if (data.autonomy.mode === 'full_auto') document.getElementById('mode-full').classList.add('active');
+                if (data.autonomy.mode === 'manual') document.getElementById('mode-manual')?.classList.add('active');
+                if (data.autonomy.mode === 'guarded_auto') document.getElementById('mode-guarded')?.classList.add('active');
+                if (data.autonomy.mode === 'full_auto') document.getElementById('mode-full')?.classList.add('active');
             }
         }
 
         function setOffline() {
-            document.getElementById('hdr-led').className = 'led led-red';
-            document.getElementById('hdr-status-text').style.color = 'var(--red-hi)';
-            document.getElementById('hdr-status-text').innerText = 'Offline';
-            document.getElementById('hdr-status-badge').style.borderColor = 'var(--red)';
+            const hdrLed = document.getElementById('hdr-led');
+            if (hdrLed) hdrLed.className = 'led led-red';
+            const hdrStatusText = document.getElementById('hdr-status-text');
+            if (hdrStatusText) {
+                hdrStatusText.style.color = 'var(--red-hi)';
+                hdrStatusText.innerText = 'Offline';
+            }
+            const hdrStatusBadge = document.getElementById('hdr-status-badge');
+            if (hdrStatusBadge) hdrStatusBadge.style.borderColor = 'var(--red)';
             
-            document.getElementById('sidebar-led').className = 'led led-amber';
-            document.getElementById('sidebar-guard').style.color = 'var(--text-dimmer)';
-            document.getElementById('sidebar-guard').innerHTML = '<span class="led led-amber"></span> GUARD STANDBY';
+            const sidebarGuard = document.getElementById('sidebar-guard');
+            if (sidebarGuard) {
+                sidebarGuard.style.color = 'var(--text-dimmer)';
+                sidebarGuard.innerHTML = '<span id="sidebar-led" class="led led-amber"></span> GUARD STANDBY';
+            }
+        }
+
+        async function verifyOfficialRegistry() {
+            const statusEl = document.getElementById('hdr-official-registry-status');
+            const ledEl = document.getElementById('hdr-official-registry-led');
+            if (statusEl) statusEl.innerText = 'Verifying...';
+            if (ledEl) ledEl.className = 'led led-amber';
+            try {
+                const res = await fetch('/api/registry/verify');
+                const data = await res.json();
+                if (data.status === 'Registered') {
+                    if (statusEl) { statusEl.innerText = 'Registered (3/3)'; statusEl.style.color = 'var(--green-hi)'; }
+                    if (ledEl) ledEl.className = 'led led-green';
+                    showToast('Google Cloud Agent Registry: All 3 agents verified registered!');
+                } else if (data.status === 'Partially registered') {
+                    if (statusEl) { statusEl.innerText = `Partially registered (${data.registered_count}/${data.total_expected})`; statusEl.style.color = 'var(--amber-hi)'; }
+                    if (ledEl) ledEl.className = 'led led-amber';
+                } else {
+                    if (statusEl) { statusEl.innerText = 'Not registered'; statusEl.style.color = 'var(--text-dim)'; }
+                    if (ledEl) ledEl.className = 'led led-amber';
+                }
+            } catch (e) {
+                if (statusEl) { statusEl.innerText = 'Verification failed'; statusEl.style.color = 'var(--red-hi)'; }
+                if (ledEl) ledEl.className = 'led led-red';
+            }
         }
 
         async function fetchState() {
@@ -731,6 +853,15 @@
 
         function renderState(data) {
             if (!data) return;
+
+            if (data.model) {
+                const hm = document.getElementById('hdr-model');
+                if (hm) hm.innerText = data.model;
+            }
+            if (data.gcp_project) {
+                const hp = document.getElementById('hdr-project');
+                if (hp) hp.innerText = data.gcp_project;
+            }
 
             // 1. KPIs
             if (data.kpis) {
@@ -964,29 +1095,34 @@
         // --- Operator Actions ---
         function operatorApprove() {
             if (!currentSelectedTxnId) return;
+            showToast(`Approved release for ${currentSelectedTxnId}`);
             fetch(`/api/transactions/${currentSelectedTxnId}/approve`, { method: 'POST' })
                 .then(() => { fetchState(); closeDrawer(); });
         }
 
         function operatorRefund() {
             if (!currentSelectedTxnId) return;
+            showToast(`Issued refund for ${currentSelectedTxnId}`, 'undo', true);
             fetch(`/api/transactions/${currentSelectedTxnId}/refund`, { method: 'POST' })
                 .then(() => { fetchState(); closeDrawer(); });
         }
 
         function operatorPause() {
             if (!currentSelectedTxnId) return;
+            showToast(`Paused transaction ${currentSelectedTxnId}`, 'pause_circle', true);
             fetch(`/api/transactions/${currentSelectedTxnId}/pause`, { method: 'POST' })
                 .then(() => { fetchState(); closeDrawer(); });
         }
 
         function operatorResume() {
             if (!currentSelectedTxnId) return;
+            showToast(`Resumed transaction ${currentSelectedTxnId}`);
             fetch(`/api/transactions/${currentSelectedTxnId}/resume`, { method: 'POST' })
                 .then(() => { fetchState(); closeDrawer(); });
         }
 
         function setAgentStatus(agentId, status) {
+            showToast(`Agent ${agentId} status set to: ${status.toUpperCase()}`, status === 'suspended' ? 'block' : 'check_circle', status === 'suspended');
             fetch(`/api/agents/${agentId}/status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -995,6 +1131,7 @@
         }
 
         function resolveSecurityIncident(eventId) {
+            showToast(`Security incident dismissed`);
             fetch(`/api/security/events/${eventId}/resolve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
